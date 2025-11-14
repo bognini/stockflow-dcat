@@ -1,0 +1,34 @@
+{
+  "placeholderImages": [
+    {
+      "id": "mic-sm7b",
+      "description": "Microphone Shure SM7B",
+      "imageUrl": "https://images.unsplash.com/photo-1689771455000-7ca175aa03fe?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxtaWNyb3Bob25lJTIwc3R1ZGlvfGVufDB8fHx8MTc2Mjc5MzcyMXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "microphone studio"
+    },
+    {
+      "id": "mic-at2020",
+      "description": "Microphone Audio-Technica AT2020",
+      "imageUrl": "https://images.unsplash.com/photo-1718664485620-0e0a2f781120?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxtaWNyb3Bob25lJTIwY29uZGVuc2VyfGVufDB8fHx8MTc2Mjc5MzcyMHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "microphone condenser"
+    },
+    {
+      "id": "mic-podmic",
+      "description": "Microphone Rode PodMic",
+      "imageUrl": "https://images.unsplash.com/photo-1627667050609-d4ba6483a368?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8bWljcm9waG9uZSUyMHBvZGNhc3R8ZW58MHx8fHwxNzYyNzI1NDU3fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "microphone podcast"
+    },
+    {
+      "id": "cam-a7siii",
+      "description": "Caméra Sony A7S III",
+      "imageUrl": "https://images.unsplash.com/photo-1637270871981-4b579f127c0c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxjYW1lcmElMjBtaXJyb3JsZXNzfGVufDB8fHx8MTc2Mjc5MzcyMHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "camera mirrorless"
+    },
+    {
+      "id": "mixer-x32",
+      "description": "Mélangeur Behringer X32",
+      "imageUrl": "https://images.unsplash.com/photo-1595520467722-98c9fd0f8fbd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxhdWRpbyUyMG1peGVyfGVufDB8fHx8MTc2MjY5NTY1MXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "audio mixer"
+    }
+  ]
+}

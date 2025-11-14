@@ -1,0 +1,155 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Categorie {
+  id      String    @id @default(uuid())
+  nom     String    @unique
+  modeles Modele[]
+  produits Produit[]
+}
+
+model Marque {
+  id      String    @id @default(uuid())
+  nom     String    @unique
+  modeles Modele[]
+  produits Produit[]
+}
+
+model Modele {
+  id          String   @id @default(uuid())
+  nom         String
+  categorieId String
+  categorie   Categorie @relation(fields: [categorieId], references: [id])
+  marqueId    String
+  marque      Marque    @relation(fields: [marqueId], references: [id])
+  produits    Produit[]
+
+  @@unique([nom, marqueId])
+}
+
+model Produit {
+  id              String           @id @default(uuid())
+  nom             String
+  description     String?
+  sku             String?          @unique
+  gtin            String?          @unique
+  poids           Float?
+  couleur         String?
+  prixAchat       Float?
+  coutLogistique  Float?
+  prixVente       Float?
+  quantite        Int              @default(0)
+  serialNumbers   String[]         @default([])
+  marqueId        String
+  marque          Marque           @relation(fields: [marqueId], references: [id])
+  categorieId     String
+  categorie       Categorie        @relation(fields: [categorieId], references: [id])
+  modeleId        String
+  modele          Modele           @relation(fields: [modeleId], references: [id])
+  emplacementId   String?
+  emplacement     Emplacement?     @relation(fields: [emplacementId], references: [id])
+  mouvements      MouvementStock[]
+  images          ProduitImage[]
+  
+  @@index([marqueId])
+  @@index([categorieId])
+  @@index([modeleId])
+}
+
+model ProduitImage {
+  id        String   @id @default(uuid())
+  produitId String
+  produit   Produit  @relation(fields: [produitId], references: [id], onDelete: Cascade)
+  filename  String
+  mime      String
+  data      Bytes
+  sortOrder Int      @default(0) @map("order")
+  createdAt DateTime @default(now())
+
+  @@index([produitId])
+}
+
+model Emplacement {
+  id       String    @id @default(uuid())
+  nom      String    @unique
+  produits Produit[]
+}
+
+model Fournisseur {
+  id         String           @id @default(uuid())
+  nom        String           @unique
+  mouvements MouvementStock[]
+}
+
+model MouvementStock {
+  id            String       @id @default(uuid())
+  date          DateTime     @default(now())
+  type          String // "ENTREE" ou "SORTIE"
+  quantite      Int
+  produitId     String
+  produit       Produit      @relation(fields: [produitId], references: [id])
+  utilisateurId String
+  utilisateur   Utilisateur  @relation("Operator", fields: [utilisateurId], references: [id])
+  demandeurId   String?
+  demandeur     Utilisateur? @relation("Requester", fields: [demandeurId], references: [id])
+  fournisseurId String?
+  fournisseur   Fournisseur? @relation(fields: [fournisseurId], references: [id])
+  destination   String?
+  projetId      String?
+  projet        Projet?      @relation(fields: [projetId], references: [id])
+  serialNumbers String[]     @default([])
+  justificatifFilename String?
+  justificatifMime      String?
+  justificatifData      Bytes?
+}
+
+model Partenaire {
+  id         String   @id @default(uuid())
+  nom        String   @unique
+  contactNom String
+  email      String
+  telephone1 String
+  telephone2 String?
+  projets    Projet[]
+}
+
+model Projet {
+  id           String           @id @default(uuid())
+  nom          String
+  description  String?
+  partenaireId String
+  partenaire   Partenaire       @relation(fields: [partenaireId], references: [id])
+  mouvements   MouvementStock[]
+}
+
+model Utilisateur {
+  id          String           @id @default(uuid())
+  username    String           @unique
+  email       String           @unique
+  password    String
+  nom         String
+  role        String // admin, marketing, technician
+  avatarUrl   String?
+  mouvements  MouvementStock[] @relation("Operator")
+  demandes    MouvementStock[] @relation("Requester")
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model MailConfig {
+  id                  String @id @default(uuid())
+  smtpHost            String?
+  smtpPort            Int?
+  smtpUser            String?
+  smtpPass            String? // Encrypted
+  notificationEmails  String[]
+}
