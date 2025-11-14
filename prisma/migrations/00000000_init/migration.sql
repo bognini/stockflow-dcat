@@ -1,4 +1,4 @@
-﻿-- CreateTable
+-- CreateTable
 CREATE TABLE "Categorie" (
     "id" TEXT NOT NULL,
     "nom" TEXT NOT NULL,
