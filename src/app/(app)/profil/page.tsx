@@ -8,16 +8,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
-import { Camera } from 'lucide-react';
+import { Camera, Loader2 } from 'lucide-react';
 
 export default function ProfilPage() {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -27,11 +28,59 @@ export default function ProfilPage() {
     }
   }, [user]);
 
-  const handleProfileUpdate = () => {
-    toast({
-      title: 'Profil mis à jour',
-      description: 'Vos informations ont été enregistrées avec succès.',
-    });
+  const handleProfileUpdate = async () => {
+    if (!user) return;
+
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim();
+
+    if (!trimmedName) {
+      toast({
+        variant: 'destructive',
+        title: 'Nom requis',
+        description: 'Veuillez saisir votre nom complet.',
+      });
+      return;
+    }
+
+    if (!trimmedEmail) {
+      toast({
+        variant: 'destructive',
+        title: 'Email requis',
+        description: 'Veuillez saisir une adresse e-mail valide.',
+      });
+      return;
+    }
+
+    setIsSavingProfile(true);
+    try {
+      const response = await fetch(`/api/users/${user.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: trimmedName, email: trimmedEmail }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Impossible de mettre à jour votre profil.');
+      }
+
+      const updatedUser = await response.json();
+      setUser(updatedUser);
+
+      toast({
+        title: 'Profil mis à jour',
+        description: 'Vos informations ont été enregistrées avec succès.',
+      });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Erreur',
+        description: error instanceof Error ? error.message : 'Une erreur est survenue.',
+      });
+    } finally {
+      setIsSavingProfile(false);
+    }
   };
 
   const handlePasswordUpdate = () => {
@@ -117,7 +166,10 @@ export default function ProfilPage() {
                 </div>
             </CardContent>
             <CardFooter className="border-t px-6 py-4">
-                <Button onClick={handleProfileUpdate}>Enregistrer les modifications</Button>
+                <Button onClick={handleProfileUpdate} disabled={isSavingProfile}>
+                  {isSavingProfile && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Enregistrer les modifications
+                </Button>
             </CardFooter>
         </Card>
 

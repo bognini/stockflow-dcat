@@ -827,6 +827,7 @@ export default function MovementsPage() {
     const [loading, setLoading] = useState(true);
     const [mouvements, setMouvements] = useState<MouvementStock[]>([]);
     const [formData, setFormData] = useState<MouvementFormData | null>(null);
+    const [activeTab, setActiveTab] = useState<'entree' | 'sortie' | 'historique'>('entree');
 
     const fetchData = async () => {
       try {
@@ -874,7 +875,7 @@ export default function MovementsPage() {
     }
 
   return (
-    <Tabs defaultValue="entree" className="w-full">
+    <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)} className="w-full">
       <ScrollArea className="w-full whitespace-nowrap">
         <TabsList className="grid w-full grid-cols-3 md:inline-flex md:w-auto">
           <TabsTrigger value="entree">Entrée de stock</TabsTrigger>
@@ -884,10 +885,16 @@ export default function MovementsPage() {
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
       <TabsContent value="entree" className="mt-4">
-        <EntreeStockTab user={user} formData={formData} onMouvementAdded={fetchData} />
+        <EntreeStockTab user={user} formData={formData} onMouvementAdded={() => {
+          fetchData();
+          setActiveTab('entree');
+        }} />
       </TabsContent>
       <TabsContent value="sortie" className="mt-4">
-        <SortieStockTab user={user} formData={formData} onMouvementAdded={fetchData} />
+        <SortieStockTab user={user} formData={formData} onMouvementAdded={() => {
+          fetchData();
+          setActiveTab('sortie');
+        }} />
       </TabsContent>
       <TabsContent value="historique" className="mt-4">
         <HistoriqueTab mouvements={mouvements} utilisateurs={formData.utilisateurs} />

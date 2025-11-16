@@ -334,12 +334,12 @@ export default function LoginPage() {
         <div className="text-center space-y-3">
             <div className="flex justify-center">
                 <Image
-                  src="/dcat-logo.svg"
+                  src="/dcat-logo.png"
                   alt="DCAT logo"
-                  width={72}
-                  height={72}
+                  width={96}
+                  height={96}
                   priority
-                  className="drop-shadow-sm"
+                  className="rounded-lg shadow-md"
                 />
             </div>
             <h1 className="mt-6 text-3xl font-headline font-bold tracking-tight text-foreground">

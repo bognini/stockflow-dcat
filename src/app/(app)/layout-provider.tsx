@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { Boxes, FolderKanban, Home, Package, Settings, Users, Waypoints, CreditCard, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
@@ -73,9 +74,17 @@ function AppShellContent({ user, pathname, pageTitle, children }: AppShellConten
   return (
     <>
       <Sidebar>
-        <SidebarHeader className="p-4 flex justify-center">
-          <Link href="/dashboard" className="text-lg font-bold text-sidebar-foreground">
-            StockFlow DCAT
+        <SidebarHeader className="p-4">
+          <Link href="/dashboard" className="flex items-center gap-3 text-sidebar-foreground">
+            <Image
+              src="/dcat-logo.png"
+              alt="Logo DCAT"
+              width={40}
+              height={40}
+              className="h-10 w-10 rounded-md object-contain shadow-sm"
+              priority
+            />
+            <span className="text-lg font-headline font-bold leading-tight">StockFlow DCAT</span>
           </Link>
         </SidebarHeader>
         <SidebarContent>
@@ -120,6 +129,12 @@ export function AppLayoutProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { user, loading } = useAuth();
   const pageTitle = getTitleFromPath(pathname);
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    }
+  }, [pathname]);
 
   React.useEffect(() => {
     if (!loading && !user) {

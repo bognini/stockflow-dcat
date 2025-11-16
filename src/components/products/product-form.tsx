@@ -135,6 +135,15 @@ export function ProductForm({ mode, initialProduct, onSuccess, onCancel, title }
   const [selectedModeleId, setSelectedModeleId] = React.useState<string>(initialProduct?.modeleId ?? '');
   const [selectedImages, setSelectedImages] = React.useState<SelectedImage[]>(() => buildSelectedImages(initialProduct));
 
+  const resetCreateForm = React.useCallback(() => {
+    setFormValues(() => ({ ...emptyFormValues }));
+    setSelectedModeleId('');
+    setSelectedImages((prev) => {
+      revokeObjectUrls(prev);
+      return [];
+    });
+  }, []);
+
   React.useEffect(() => {
     const fetchOptions = async () => {
       try {
@@ -359,20 +368,17 @@ export function ProductForm({ mode, initialProduct, onSuccess, onCancel, title }
             : 'Le nouveau produit a été ajouté à votre inventaire.',
       });
 
-      setFormValues(buildFormValues(savedProduit));
-      setSelectedModeleId(savedProduit.modeleId);
-      setSelectedImages((prev) => {
-        revokeObjectUrls(prev);
-        return buildSelectedImages(savedProduit);
-      });
-
-      if (mode === 'create') {
-        setFormValues(emptyFormValues);
-        setSelectedModeleId('');
+      if (mode === 'edit') {
+        // For edit mode, update form with saved product data
+        setFormValues(buildFormValues(savedProduit));
+        setSelectedModeleId(savedProduit.modeleId);
         setSelectedImages((prev) => {
           revokeObjectUrls(prev);
-          return [];
+          return buildSelectedImages(savedProduit);
         });
+      } else {
+        // For create mode, reset the form completely
+        resetCreateForm();
       }
 
       onSuccess?.(savedProduit);

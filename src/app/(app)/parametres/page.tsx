@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -33,12 +33,273 @@ type ListContentProps<T extends Item> = {
   title: string;
   items: T[];
   endpoint: ApiEndpoint;
-  children?: (item: T) => React.ReactNode;
+  renderItem?: (item: T) => React.ReactNode;
   formContent: React.ReactNode;
-  fetchData: () => void;
+  fetchData: () => Promise<void> | void;
 };
 
-function ListContent<T extends Item>({ title, items, endpoint, children, formContent, fetchData }: ListContentProps<T>) {
+
+type ModeleFormProps = {
+  categories: Categorie[];
+  marques: Marque[];
+  onAdd: (item: { nom: string; marqueId: string; categorieId: string }, name: string) => void | Promise<void>;
+};
+
+function ModeleForm({ categories, marques, onAdd }: ModeleFormProps) {
+  const { toast } = useToast();
+  const [nom, setNom] = React.useState('');
+  const [marqueId, setMarqueId] = React.useState('');
+  const [categorieId, setCategorieId] = React.useState('');
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  const handleAdd = async () => {
+    if (nom.trim() === '' || marqueId === '' || categorieId === '') {
+      toast({ variant: 'destructive', title: 'Champs manquants' });
+      return;
+    }
+    setIsSubmitting(true);
+    await onAdd({ nom, marqueId, categorieId }, nom);
+    setNom('');
+    setMarqueId('');
+    setCategorieId('');
+    setIsSubmitting(false);
+  };
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
+      <div className="space-y-1">
+        <Label>Nom du modèle</Label>
+        <Input placeholder="Nom du nouveau modèle" value={nom} onChange={(e) => setNom(e.target.value)} />
+      </div>
+      <div className="space-y-1">
+        <Label>Marque</Label>
+        <Select value={marqueId} onValueChange={setMarqueId}>
+          <SelectTrigger><SelectValue placeholder="Choisir une marque" /></SelectTrigger>
+          <SelectContent>{marques.map((m) => <SelectItem key={m.id} value={m.id}>{m.nom}</SelectItem>)}</SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-1">
+        <Label>Catégorie</Label>
+        <Select value={categorieId} onValueChange={setCategorieId}>
+          <SelectTrigger><SelectValue placeholder="Choisir une catégorie" /></SelectTrigger>
+          <SelectContent>{categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.nom}</SelectItem>)}</SelectContent>
+        </Select>
+      </div>
+      <Button aria-label="Ajouter" onClick={handleAdd} className="w-full md:w-auto" disabled={isSubmitting}>
+        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />} Ajouter
+      </Button>
+    </div>
+  );
+}
+
+type ProjetFormProps = {
+  partenaires: Partenaire[];
+  onAdd: (item: { nom: string; partenaireId: string; description: string }, name: string) => void | Promise<void>;
+};
+
+function ProjetForm({ partenaires, onAdd }: ProjetFormProps) {
+  const [nom, setNom] = React.useState('');
+  const [partenaireId, setPartenaireId] = React.useState('');
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  const handleAdd = async () => {
+    if (nom.trim() === '' || partenaireId === '') {
+      return;
+    }
+    setIsSubmitting(true);
+    await onAdd({ nom, partenaireId, description: '' }, nom);
+    setNom('');
+    setPartenaireId('');
+    setIsSubmitting(false);
+  };
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 items-end">
+      <div className="space-y-1">
+        <Label>Nom du projet</Label>
+        <Input placeholder="Nom du nouveau projet" value={nom} onChange={(e) => setNom(e.target.value)} />
+      </div>
+      <div className="space-y-1">
+        <Label>Partenaire</Label>
+        <Select value={partenaireId} onValueChange={setPartenaireId}>
+          <SelectTrigger><SelectValue placeholder="Choisir un partenaire" /></SelectTrigger>
+          <SelectContent>{partenaires.map((p) => <SelectItem key={p.id} value={p.id}>{p.nom}</SelectItem>)}</SelectContent>
+        </Select>
+      </div>
+      <Button aria-label="Ajouter" onClick={handleAdd} className="w-full md:w-auto" disabled={isSubmitting}>
+        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />} Ajouter
+      </Button>
+    </div>
+  );
+}
+
+type PartenaireFormProps = {
+  onAdd: (item: { nom: string; contactNom: string; email: string; telephone1: string; telephone2: string | null }, name: string) => void | Promise<void>;
+};
+
+function PartenaireForm({ onAdd }: PartenaireFormProps) {
+  const [nom, setNom] = React.useState('');
+  const [contactNom, setContactNom] = React.useState('');
+  const [email, setEmail] = React.useState('');
+  const [telephone1, setTelephone1] = React.useState('');
+  const [telephone2, setTelephone2] = React.useState('');
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  const handleAdd = async () => {
+    if (nom.trim() === '' || contactNom.trim() === '' || email.trim() === '' || telephone1.trim() === '') return;
+    setIsSubmitting(true);
+    await onAdd({ nom, contactNom, email, telephone1, telephone2: telephone2 || null }, nom);
+    setNom('');
+    setContactNom('');
+    setEmail('');
+    setTelephone1('');
+    setTelephone2('');
+    setIsSubmitting(false);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-1">
+          <Label>Nom de l'entreprise</Label>
+          <Input placeholder="Nom de l'entreprise partenaire" value={nom} onChange={(e) => setNom(e.target.value)} />
+        </div>
+        <div className="space-y-1">
+          <Label>Nom du contact</Label>
+          <Input placeholder="Nom de la personne à contacter" value={contactNom} onChange={(e) => setContactNom(e.target.value)} />
+        </div>
+      </div>
+      <div className="space-y-1">
+        <Label>Adresse e-mail</Label>
+        <Input placeholder="E-mail du contact" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-1">
+          <Label>Téléphone 1</Label>
+          <Input placeholder="Numéro de téléphone principal" value={telephone1} onChange={(e) => setTelephone1(e.target.value)} />
+        </div>
+        <div className="space-y-1">
+          <Label>Téléphone 2 (Optionnel)</Label>
+          <Input placeholder="Autre numéro de téléphone" value={telephone2} onChange={(e) => setTelephone2(e.target.value)} />
+        </div>
+      </div>
+      <Button aria-label="Ajouter" onClick={handleAdd} disabled={isSubmitting}>
+        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />} Ajouter le partenaire
+      </Button>
+    </div>
+  );
+}
+
+type UtilisateurFormProps = {
+  onAdd: (item: { nom: string; username: string; email: string; password: string; role: string }, name: string) => void | Promise<void>;
+};
+
+function UtilisateurForm({ onAdd }: UtilisateurFormProps) {
+  const { toast } = useToast();
+  const [nom, setNom] = React.useState('');
+  const [username, setUsername] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [email, setEmail] = React.useState('');
+  const [confirmPassword, setConfirmPassword] = React.useState('');
+  const [role, setRole] = React.useState<'admin' | 'marketing' | 'technician' | ''>('');
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  const handleAdd = async () => {
+    if (nom.trim() === '' || username.trim() === '' || password.trim() === '' || role === '' || password !== confirmPassword) {
+      toast({ variant: 'destructive', title: 'Vérifiez le formulaire' });
+      return;
+    }
+    setIsSubmitting(true);
+    await onAdd({ nom, username, email, password, role }, nom);
+    setNom('');
+    setUsername('');
+    setEmail('');
+    setPassword('');
+    setConfirmPassword('');
+    setRole('');
+    setIsSubmitting(false);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-1">
+          <Label>Nom complet</Label>
+          <Input placeholder="Nom et prénom" value={nom} onChange={(e) => setNom(e.target.value)} />
+        </div>
+        <div className="space-y-1">
+          <Label>Nom d'utilisateur</Label>
+          <Input placeholder="Identifiant de connexion" value={username} onChange={(e) => setUsername(e.target.value)} />
+        </div>
+      </div>
+      <div className="space-y-1">
+        <Label>Adresse e-mail</Label>
+        <Input placeholder="E-mail de l'utilisateur" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-1">
+          <Label>Mot de passe</Label>
+          <Input placeholder="Mot de passe" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        </div>
+        <div className="space-y-1">
+          <Label>Confirmer le mot de passe</Label>
+          <Input placeholder="Confirmer le mot de passe" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+        </div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+        <div className="space-y-1">
+          <Label>Rôle</Label>
+          <Select value={role} onValueChange={(value) => setRole(value as any)}>
+            <SelectTrigger><SelectValue placeholder="Choisir un rôle" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="admin">Administrateur</SelectItem>
+              <SelectItem value="marketing">Marketing</SelectItem>
+              <SelectItem value="technician">Technicien</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <Button aria-label="Ajouter" onClick={handleAdd} className="w-full md:w-auto" disabled={isSubmitting}>
+          {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />} Ajouter l'utilisateur
+        </Button>
+      </div>
+      {password && confirmPassword && password !== confirmPassword && (
+        <p className="text-sm text-destructive">Les mots de passe ne correspondent pas.</p>
+      )}
+    </div>
+  );
+}
+
+type UtilisateursTabProps = {
+  utilisateurs: Utilisateur[];
+  mailConfig: MailConfig | null;
+  fetchData: () => Promise<void> | void;
+  handleAddItem: (endpoint: ApiEndpoint, payload: any, name: string) => Promise<void> | void;
+};
+
+function UtilisateursTab({ utilisateurs, mailConfig, fetchData, handleAddItem }: UtilisateursTabProps) {
+  return (
+    <>
+      <ListContent<Utilisateur>
+        title="Gestion des Utilisateurs"
+        items={utilisateurs}
+        endpoint="utilisateurs"
+        fetchData={fetchData}
+        formContent={<UtilisateurForm onAdd={(payload, name) => handleAddItem('utilisateurs', payload, name)} />}
+        renderItem={(item: Utilisateur) => (
+          <div className="flex-1 truncate">
+            <span className="font-medium truncate">{item.nom} ({item.username})</span>
+            <div className="text-xs text-muted-foreground capitalize">
+              Rôle: {item.role}
+            </div>
+          </div>
+        )}
+      />
+      <MailServerConfig config={mailConfig} onRefresh={fetchData} />
+    </>
+  );
+}
+
+function ListContent<T extends Item>({ title, items, endpoint, renderItem, formContent, fetchData }: ListContentProps<T>) {
   const { toast } = useToast();
 
   const handleDelete = async (itemId: string, itemName: string) => {
@@ -54,7 +315,7 @@ function ListContent<T extends Item>({ title, items, endpoint, children, formCon
         title: 'Élément supprimé',
         description: `L'élément "${itemName}" a été supprimé avec succès.`,
       });
-      fetchData(); // Re-fetch all data to ensure consistency
+      await Promise.resolve(fetchData()); // Re-fetch all data to ensure consistency
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -76,7 +337,7 @@ function ListContent<T extends Item>({ title, items, endpoint, children, formCon
           {items.map((item) => (
             <ListItem key={item.id}>
               <div className="flex-1 min-w-0 pr-2">
-                {children ? children(item) : <span className="truncate">{item.nom}</span>}
+                {renderItem ? renderItem(item) : <span className="truncate">{item.nom}</span>}
               </div>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -452,7 +713,7 @@ export default function SettingsPage() {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<string>('categories');
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
       try {
         setLoading(true);
         const response = await fetch('/api/settings');
@@ -469,13 +730,13 @@ export default function SettingsPage() {
       } finally {
         setLoading(false);
       }
-    };
+    }, [toast]);
     
     useEffect(() => {
         if (user?.role === 'admin') {
             fetchData();
         }
-    }, [user]);
+    }, [user, fetchData]);
 
     const handleAddItem = async (endpoint: ApiEndpoint, payload: any, itemName: string) => {
       try {
@@ -524,236 +785,6 @@ export default function SettingsPage() {
 
   const { categories, marques, modeles, fournisseurs, emplacements, partenaires, projets, utilisateurs, mailConfig } = data;
 
-  const ModeleForm = ({ onAdd }: { onAdd: (item: any, name: string) => void }) => {
-    const [nom, setNom] = React.useState('');
-    const [marqueId, setMarqueId] = React.useState('');
-    const [categorieId, setCategorieId] = React.useState('');
-    const [isSubmitting, setIsSubmitting] = React.useState(false);
-  
-    const handleAdd = async () => {
-      if (nom.trim() === '' || marqueId === '' || categorieId === '') {
-        toast({ variant: 'destructive', title: 'Champs manquants' });
-        return;
-      }
-      setIsSubmitting(true);
-      await onAdd({ nom, marqueId, categorieId }, nom);
-      setNom('');
-      setMarqueId('');
-      setCategorieId('');
-      setIsSubmitting(false);
-    };
-  
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
-        <div className="space-y-1">
-          <Label>Nom du modèle</Label>
-          <Input placeholder="Nom du nouveau modèle" value={nom} onChange={(e) => setNom(e.target.value)} />
-        </div>
-        <div className="space-y-1">
-          <Label>Marque</Label>
-          <Select value={marqueId} onValueChange={setMarqueId}>
-            <SelectTrigger><SelectValue placeholder="Choisir une marque" /></SelectTrigger>
-            <SelectContent>{marques.map(m => <SelectItem key={m.id} value={m.id}>{m.nom}</SelectItem>)}</SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1">
-          <Label>Catégorie</Label>
-          <Select value={categorieId} onValueChange={setCategorieId}>
-            <SelectTrigger><SelectValue placeholder="Choisir une catégorie" /></SelectTrigger>
-            <SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.nom}</SelectItem>)}</SelectContent>
-          </Select>
-        </div>
-        <Button aria-label="Ajouter" onClick={handleAdd} className="w-full md:w-auto" disabled={isSubmitting}>
-          {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />} Ajouter
-        </Button>
-      </div>
-    );
-  };
-  
-  const ProjetForm = ({ onAdd }: { onAdd: (item: any, name: string) => void }) => {
-    const [nom, setNom] = React.useState('');
-    const [partenaireId, setPartenaireId] = React.useState('');
-    const [isSubmitting, setIsSubmitting] = React.useState(false);
-
-  
-    const handleAdd = async () => {
-      if (nom.trim() === '' || partenaireId === '') return;
-      setIsSubmitting(true);
-      await onAdd({ nom, partenaireId, description: '' }, nom);
-      setNom('');
-      setPartenaireId('');
-      setIsSubmitting(false);
-    };
-  
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 items-end">
-        <div className="space-y-1">
-          <Label>Nom du projet</Label>
-          <Input placeholder="Nom du nouveau projet" value={nom} onChange={(e) => setNom(e.target.value)} />
-        </div>
-        <div className="space-y-1">
-          <Label>Partenaire</Label>
-          <Select value={partenaireId} onValueChange={setPartenaireId}>
-            <SelectTrigger><SelectValue placeholder="Choisir un partenaire" /></SelectTrigger>
-            <SelectContent>{partenaires.map(c => <SelectItem key={c.id} value={c.id}>{c.nom}</SelectItem>)}</SelectContent>
-          </Select>
-        </div>
-        <Button aria-label="Ajouter" onClick={handleAdd} className="w-full md:w-auto" disabled={isSubmitting}>
-          {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />} Ajouter
-        </Button>
-      </div>
-    );
-  };
-
-  const PartenaireForm = ({ onAdd }: { onAdd: (item: any, name: string) => void }) => {
-    const [nom, setNom] = React.useState('');
-    const [contactNom, setContactNom] = React.useState('');
-    const [email, setEmail] = React.useState('');
-    const [telephone1, setTelephone1] = React.useState('');
-    const [telephone2, setTelephone2] = React.useState('');
-    const [isSubmitting, setIsSubmitting] = React.useState(false);
-  
-    const handleAdd = async () => {
-      if (nom.trim() === '' || contactNom.trim() === '' || email.trim() === '' || telephone1.trim() === '') return;
-      setIsSubmitting(true);
-      await onAdd({ nom, contactNom, email, telephone1, telephone2: telephone2 || null }, nom);
-      setNom('');
-      setContactNom('');
-      setEmail('');
-      setTelephone1('');
-      setTelephone2('');
-      setIsSubmitting(false);
-    };
-  
-    return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-1">
-              <Label>Nom de l'entreprise</Label>
-              <Input placeholder="Nom de l'entreprise partenaire" value={nom} onChange={(e) => setNom(e.target.value)} />
-          </div>
-          <div className="space-y-1">
-              <Label>Nom du contact</Label>
-              <Input placeholder="Nom de la personne à contacter" value={contactNom} onChange={(e) => setContactNom(e.target.value)} />
-          </div>
-        </div>
-         <div className="space-y-1">
-            <Label>Adresse e-mail</Label>
-            <Input placeholder="E-mail du contact" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1">
-                <Label>Téléphone 1</Label>
-                <Input placeholder="Numéro de téléphone principal" value={telephone1} onChange={(e) => setTelephone1(e.target.value)} />
-            </div>
-            <div className="space-y-1">
-                <Label>Téléphone 2 (Optionnel)</Label>
-                <Input placeholder="Autre numéro de téléphone" value={telephone2} onChange={(e) => setTelephone2(e.target.value)} />
-            </div>
-        </div>
-        <Button aria-label="Ajouter" onClick={handleAdd} disabled={isSubmitting}>
-            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />} Ajouter le partenaire
-        </Button>
-      </div>
-    );
-  };
-  
-  const UtilisateurForm = ({ onAdd }: { onAdd: (item: any, name: string) => void }) => {
-    const [nom, setNom] = React.useState('');
-    const [username, setUsername] = React.useState('');
-    const [password, setPassword] = React.useState('');
-    const [email, setEmail] = React.useState('');
-    const [confirmPassword, setConfirmPassword] = React.useState('');
-    const [role, setRole] = React.useState<'admin' | 'marketing' | 'technician' | ''>('');
-    const [isSubmitting, setIsSubmitting] = React.useState(false);
-  
-    const handleAdd = async () => {
-      if (nom.trim() === '' || username.trim() === '' || password.trim() === '' || role === '' || password !== confirmPassword) {
-        toast({ variant: 'destructive', title: 'Vérifiez le formulaire' });
-        return;
-      }
-      setIsSubmitting(true);
-      await onAdd({ nom, username, email, password, role }, nom);
-      setNom('');
-      setUsername('');
-      setEmail('');
-      setPassword('');
-      setConfirmPassword('');
-      setRole('');
-      setIsSubmitting(false);
-    };
-  
-    return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1">
-                <Label>Nom complet</Label>
-                <Input placeholder="Nom et prénom" value={nom} onChange={(e) => setNom(e.target.value)} />
-            </div>
-            <div className="space-y-1">
-                <Label>Nom d'utilisateur</Label>
-                <Input placeholder="Identifiant de connexion" value={username} onChange={(e) => setUsername(e.target.value)} />
-            </div>
-        </div>
-        <div className="space-y-1">
-            <Label>Adresse e-mail</Label>
-            <Input placeholder="E-mail de l'utilisateur" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1">
-                <Label>Mot de passe</Label>
-                <Input placeholder="Mot de passe" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-            </div>
-            <div className="space-y-1">
-                <Label>Confirmer le mot de passe</Label>
-                <Input placeholder="Confirmer le mot de passe" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
-            </div>
-        </div>
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-            <div className="space-y-1">
-              <Label>Rôle</Label>
-              <Select value={role} onValueChange={(value) => setRole(value as any)}>
-                <SelectTrigger><SelectValue placeholder="Choisir un rôle" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">Administrateur</SelectItem>
-                  <SelectItem value="marketing">Marketing</SelectItem>
-                  <SelectItem value="technician">Technicien</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button aria-label="Ajouter" onClick={handleAdd} className="w-full md:w-auto" disabled={isSubmitting}>
-                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />} Ajouter l'utilisateur
-            </Button>
-        </div>
-        {password && confirmPassword && password !== confirmPassword && (
-            <p className="text-sm text-destructive">Les mots de passe ne correspondent pas.</p>
-        )}
-      </div>
-    );
-  };
-
-  const UtilisateursTab = () => (
-    <>
-      <ListContent<Utilisateur>
-        title="Gestion des Utilisateurs" 
-        items={utilisateurs} 
-        endpoint="utilisateurs"
-        fetchData={fetchData}
-        formContent={<UtilisateurForm onAdd={(payload, name) => handleAddItem('utilisateurs', payload, name)} />}
-      >
-        {(item) => (
-           <div className="flex-1 truncate">
-            <span className="font-medium truncate">{item.nom} ({item.username})</span>
-            <div className="text-xs text-muted-foreground capitalize">
-              Rôle: {item.role}
-            </div>
-          </div>
-        )}
-      </ListContent>
-      <MailServerConfig config={mailConfig} onRefresh={fetchData}/>
-    </>
-  );
-
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <ScrollArea className="w-full whitespace-nowrap border-b">
@@ -793,9 +824,8 @@ export default function SettingsPage() {
           items={modeles}
           endpoint="modeles"
           fetchData={fetchData}
-          formContent={<ModeleForm onAdd={(payload, name) => handleAddItem('modeles', payload, name)} />}
-        >
-          {(item) => (
+          formContent={<ModeleForm categories={categories} marques={marques} onAdd={(payload, name) => handleAddItem('modeles', payload, name)} />}
+          renderItem={(item: Modele) => (
             <div className="flex-1 truncate">
               <span className="font-medium truncate">{item.nom}</span>
               <div className="text-xs text-muted-foreground truncate">
@@ -803,7 +833,7 @@ export default function SettingsPage() {
               </div>
             </div>
           )}
-        </ListContent>
+        />
       </TabsContent>
       <TabsContent value="fournisseurs" className="mt-4">
         <ListContent 
@@ -830,7 +860,7 @@ export default function SettingsPage() {
           endpoint="partenaires"
           fetchData={fetchData}
           formContent={<PartenaireForm onAdd={(payload, name) => handleAddItem('partenaires', payload, name)} />}
-          children={(item) => (
+          renderItem={(item: Partenaire) => (
             <div className="flex-1 truncate">
               <span className="font-medium truncate">{item.nom} <span className="text-muted-foreground font-normal">({item.contactNom})</span></span>
               <div className="text-xs text-muted-foreground truncate">
@@ -846,9 +876,8 @@ export default function SettingsPage() {
           items={projets} 
           endpoint="projets"
           fetchData={fetchData}
-          formContent={<ProjetForm onAdd={(payload, name) => handleAddItem('projets', payload, name)} />}
-        >
-          {(item) => (
+          formContent={<ProjetForm partenaires={partenaires} onAdd={(payload, name) => handleAddItem('projets', payload, name)} />}
+          renderItem={(item: Projet) => (
             <div className="flex-1 truncate">
               <span className="font-medium truncate">{item.nom}</span>
               <div className="text-xs text-muted-foreground">
@@ -856,10 +885,10 @@ export default function SettingsPage() {
               </div>
             </div>
           )}
-        </ListContent>
+        />
       </TabsContent>
        <TabsContent value="utilisateurs" className="mt-4">
-          <UtilisateursTab />
+          <UtilisateursTab utilisateurs={utilisateurs} mailConfig={mailConfig} fetchData={fetchData} handleAddItem={handleAddItem} />
       </TabsContent>
     </Tabs>
   );

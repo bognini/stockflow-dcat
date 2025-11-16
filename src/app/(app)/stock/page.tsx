@@ -294,6 +294,7 @@ export default function StockStatusPage() {
         </div>
       </CardContent>
       <ProductDetailSheet
+        key={detailProduct?.id ?? 'detail-empty'}
         open={detailOpen}
         onOpenChange={setDetailOpen}
         produit={detailProduct}
@@ -327,10 +328,6 @@ function ProductDetailSheet({
   loading: boolean;
 }) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-
-  useEffect(() => {
-    setActiveImageIndex(0);
-  }, [produit?.id]);
 
   if (!produit) {
     return (
