@@ -19,7 +19,7 @@ import {
   isAcceptedPhotoType,
 } from '@/lib/image-constraints';
 import type { Categorie, Emplacement, Marque, Modele, Produit } from '@/lib/types';
-import { resolveImageSrc } from '@/lib/image-utils';
+import { resolveImageSrc, PLACEHOLDER_IMAGE } from '@/lib/image-utils';
 
 type ProductFormMode = 'create' | 'edit';
 
@@ -631,19 +631,20 @@ export function ProductForm({ mode, initialProduct, onSuccess, onCancel, title }
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             {selectedImages.map((image, index) => (
               <div 
-                key={`${image.preview}-${index}`} 
+                key={`${image.id ?? image.preview ?? index}`}
                 className="relative group cursor-move"
                 draggable
                 onDragStart={(e) => handleDragStart(e, index)}
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, index)}
               >
-                <Image
-                  src={image.preview || `data:${image.mime};base64,${image.base64}`}
+                <img
+                  src={image.preview || (image.base64 ? `data:${image.mime};base64,${image.base64}` : '')}
                   alt={image.filename}
-                  width={160}
-                  height={160}
                   className="h-24 w-full rounded-md object-cover pointer-events-none"
+                  onError={(event) => {
+                    event.currentTarget.src = PLACEHOLDER_IMAGE;
+                  }}
                 />
                 <div className="absolute top-1 left-1 bg-black/60 text-white text-xs px-1.5 py-0.5 rounded">
                   {index + 1}

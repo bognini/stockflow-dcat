@@ -20,10 +20,21 @@ import { Produit, Categorie, Emplacement } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import Image from 'next/image';
 import { ProductForm } from '@/components/products/product-form';
 import { PLACEHOLDER_IMAGE, resolveImageSrc } from '@/lib/image-utils';
+import { useToast } from '@/hooks/use-toast';
 
 const getStatus = (quantity: number) => {
     if (quantity === 0) return { text: 'En rupture', color: 'bg-red-500', progress: 0, className: 'text-red-600' };
@@ -83,11 +94,13 @@ export default function StockStatusPage() {
   const [detailProduct, setDetailProduct] = useState<Produit | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [resetConfirmation, setResetConfirmation] = useState('');
+  const [resetSubmitting, setResetSubmitting] = useState(false);
   const { user } = useAuth();
+  const { toast } = useToast();
 
-
-  useEffect(() => {
-    const fetchData = async () => {
+  const fetchData = useCallback(async () => {
       try {
         setLoading(true);
         const [produitsRes, categoriesRes, emplacementsRes] = await Promise.all([
@@ -109,9 +122,11 @@ export default function StockStatusPage() {
       } finally {
         setLoading(false);
       }
-    };
+    }, []);
+
+  useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   const filteredProduits = useMemo(() => {
     return produits.filter(produit => {
@@ -154,6 +169,51 @@ export default function StockStatusPage() {
     setProduits((prev: Produit[]) => prev.map((p) => (p.id === updated.id ? updated : p)));
     setDetailProduct(updated);
   };
+
+  const handleDeleteProduit = (deletedId: string) => {
+    setProduits((prev) => prev.filter((p) => p.id !== deletedId));
+    if (detailProduct?.id === deletedId) {
+      setDetailProduct(null);
+      setDetailOpen(false);
+    }
+  };
+
+  const handleResetHistory = async () => {
+    if (resetConfirmation !== 'DCAT') {
+      return;
+    }
+
+    try {
+      setResetSubmitting(true);
+      const res = await fetch('/api/mouvements/reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirmation: resetConfirmation }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Impossible de réinitialiser l\'historique.');
+      }
+
+      await fetchData();
+      toast({
+        title: 'Historique réinitialisé',
+        description: 'Tous les mouvements ont été supprimés et les stocks remis à zéro.',
+      });
+      setResetDialogOpen(false);
+      setResetConfirmation('');
+    } catch (error) {
+      console.error('Failed to reset history', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erreur',
+        description: error instanceof Error ? error.message : 'Une erreur est survenue.',
+      });
+    } finally {
+      setResetSubmitting(false);
+    }
+  };
   
   if (!user || !['admin', 'marketing', 'technician'].includes(user.role)) {
     return (
@@ -179,7 +239,14 @@ export default function StockStatusPage() {
     <Card>
       <CardHeader>
         <CardTitle className="font-headline">État Actuel du Stock</CardTitle>
-        <CardDescription>Consultez, recherchez et filtrez les produits de votre inventaire.</CardDescription>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <CardDescription>Consultez, recherchez et filtrez les produits de votre inventaire.</CardDescription>
+          {user?.role === 'admin' && (
+            <Button variant="destructive" onClick={() => setResetDialogOpen(true)}>
+              Réinitialiser l'historique
+            </Button>
+          )}
+        </div>
         <div className="mt-4 flex flex-col md:flex-row items-center gap-4">
           <div className="relative w-full md:flex-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -305,8 +372,40 @@ export default function StockStatusPage() {
         isEditing={isEditing}
         setIsEditing={setIsEditing}
         onUpdated={handleUpdateProduit}
+        onDeleted={handleDeleteProduit}
         loading={detailLoading}
       />
+
+      <AlertDialog open={resetDialogOpen} onOpenChange={(open) => {
+        setResetDialogOpen(open);
+        if (!open) {
+          setResetConfirmation('');
+        }
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Réinitialiser l'historique des mouvements</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action va supprimer définitivement tous les mouvements de stock et remettre les quantités à zéro.
+              Tapez <strong>DCAT</strong> pour confirmer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Input
+            value={resetConfirmation}
+            onChange={(event) => setResetConfirmation(event.target.value.toUpperCase())}
+            placeholder="DCAT"
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={resetSubmitting}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={resetConfirmation !== 'DCAT' || resetSubmitting}
+              onClick={handleResetHistory}
+            >
+              {resetSubmitting ? 'Réinitialisation...' : 'Confirmer'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
@@ -319,6 +418,7 @@ function ProductDetailSheet({
   isEditing,
   setIsEditing,
   onUpdated,
+  onDeleted,
   loading,
 }: {
   open: boolean;
@@ -328,14 +428,22 @@ function ProductDetailSheet({
   isEditing: boolean;
   setIsEditing: (value: boolean) => void;
   onUpdated: (produit: Produit) => void;
+  onDeleted: (id: string) => void;
   loading: boolean;
 }) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [deleteSubmitting, setDeleteSubmitting] = useState(false);
   const produitId = produit?.id ?? null;
+  const imagesCount = produit?.images?.length ?? 0;
+  const { toast } = useToast();
 
   useEffect(() => {
-    setActiveImageIndex(0);
-  }, [produitId]);
+    if (open) {
+      setActiveImageIndex(0);
+    }
+  }, [produitId, open, imagesCount]);
 
   const detailImages = useMemo(() => {
     if (!produit) return [] as (Produit['images'][number] & { resolvedSrc: string })[];
@@ -344,6 +452,41 @@ function ProductDetailSheet({
       resolvedSrc: resolveImageSrc(image),
     }));
   }, [produit]);
+
+  const handleDeleteProduct = async () => {
+    if (!produit || deleteConfirmation !== 'DCAT') {
+      return;
+    }
+
+    try {
+      setDeleteSubmitting(true);
+      const res = await fetch(`/api/produits/${produit.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Suppression impossible.');
+      }
+
+      toast({
+        title: 'Produit supprimé',
+        description: `${produit.nom} a été supprimé de l'inventaire.`,
+      });
+      setDeleteDialogOpen(false);
+      setDeleteConfirmation('');
+      onDeleted(produit.id);
+    } catch (error) {
+      console.error('Failed to delete product', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erreur',
+        description: error instanceof Error ? error.message : 'Une erreur est survenue.',
+      });
+    } finally {
+      setDeleteSubmitting(false);
+    }
+  };
 
   if (!produit) {
     return (
@@ -468,9 +611,18 @@ function ProductDetailSheet({
             </div>
 
             {canEdit && (
-              <div className="flex justify-end">
-                <Button onClick={() => setIsEditing(true)}>
+              <div className="flex flex-col sm:flex-row justify-end gap-2">
+                <Button variant="outline" onClick={() => setIsEditing(true)}>
                   <Pencil className="h-4 w-4 mr-2" /> Modifier
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    setDeleteDialogOpen(true);
+                    setDeleteConfirmation('');
+                  }}
+                >
+                  Supprimer
                 </Button>
               </div>
             )}
@@ -489,6 +641,41 @@ function ProductDetailSheet({
           </div>
         )}
       </SheetContent>
+
+      <AlertDialog
+        open={deleteDialogOpen}
+        onOpenChange={(openDialog) => {
+          setDeleteDialogOpen(openDialog);
+          if (!openDialog) {
+            setDeleteConfirmation('');
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer ce produit ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible et supprimera également l'historique des mouvements associés.
+              Tapez <strong>DCAT</strong> pour confirmer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Input
+            value={deleteConfirmation}
+            onChange={(event) => setDeleteConfirmation(event.target.value.toUpperCase())}
+            placeholder="DCAT"
+            autoFocus
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteSubmitting}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleteConfirmation !== 'DCAT' || deleteSubmitting}
+              onClick={handleDeleteProduct}
+            >
+              {deleteSubmitting ? 'Suppression...' : 'Confirmer'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Sheet>
   );
 }

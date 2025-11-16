@@ -47,6 +47,27 @@ export async function GET(_: Request, context: { params: Promise<{ id: string }>
   }
 }
 
+export async function DELETE(_: Request, context: { params: Promise<{ id: string }> }) {
+  try {
+    const params = await context.params;
+    const { id } = paramsSchema.parse(params);
+
+    await prisma.$transaction(async (tx) => {
+      await tx.mouvementStock.deleteMany({ where: { produitId: id } });
+      await tx.produitImage.deleteMany({ where: { produitId: id } });
+      await tx.produit.delete({ where: { id } });
+    });
+
+    return new NextResponse(null, { status: 204 });
+  } catch (error) {
+    console.error('[API_PRODUIT_DETAIL_DELETE_ERROR]', error);
+    if (error instanceof z.ZodError) {
+      return new NextResponse('Invalid product id', { status: 400 });
+    }
+    return new NextResponse(JSON.stringify({ error: (error as Error).message }), { status: 400 });
+  }
+}
+
 export async function PATCH(req: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const params = await context.params;
