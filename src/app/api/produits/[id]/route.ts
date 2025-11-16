@@ -58,7 +58,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
         throw new Error('Produit non trouvé');
       }
 
-      const produit = await tx.produit.update({
+      await tx.produit.update({
         where: { id },
         data: {
           nom: data.nom,
@@ -90,14 +90,30 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
         })),
       });
 
-      const images = await tx.produitImage.findMany({
-        where: { produitId: id },
-        orderBy: { sortOrder: 'asc' },
+      // Fetch the complete product with all nested relations
+      const produit = await tx.produit.findUnique({
+        where: { id },
+        include: {
+          marque: true,
+          emplacement: true,
+          modele: {
+            include: {
+              categorie: true,
+            },
+          },
+          images: {
+            orderBy: { sortOrder: 'asc' },
+          },
+        },
       });
+
+      if (!produit) {
+        throw new Error('Produit non trouvé après mise à jour');
+      }
 
       return {
         ...produit,
-        images: images.map(serializeImage),
+        images: produit.images.map(serializeImage),
       };
     });
 

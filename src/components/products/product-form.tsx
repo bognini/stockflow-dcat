@@ -111,13 +111,25 @@ function buildSelectedImages(product?: Produit | null): SelectedImage[] {
     .sort((a, b) => a.order - b.order)
     .map((image) => {
       // Ensure we have clean base64 data without data URI prefix
-      const cleanBase64 = image.data ?? '';
+      let cleanBase64 = image.data ?? '';
+      
+      // Remove data URI prefix if present
+      if (cleanBase64.startsWith('data:')) {
+        const base64Index = cleanBase64.indexOf('base64,');
+        if (base64Index !== -1) {
+          cleanBase64 = cleanBase64.substring(base64Index + 7);
+        }
+      }
+      
+      // Validate base64 data exists and is not empty
+      const isValidBase64 = cleanBase64 && cleanBase64.length > 0;
+      
       return {
         id: image.id,
         filename: image.filename,
         mime: image.mime,
         base64: cleanBase64,
-        preview: cleanBase64 ? `data:${image.mime};base64,${cleanBase64}` : '',
+        preview: isValidBase64 ? `data:${image.mime};base64,${cleanBase64}` : '',
       };
     });
 }

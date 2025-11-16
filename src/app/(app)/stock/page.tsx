@@ -30,6 +30,20 @@ const getStatus = (quantity: number) => {
     return { text: 'En stock', color: 'bg-green-500', progress: Math.min(100, (quantity / 10) * 100), className: 'text-green-600' };
 };
 
+// Helper to safely construct image data URI
+const getImageSrc = (data: string | null | undefined, mime: string) => {
+  if (!data || data.length === 0) return '/placeholder.png';
+  // Remove data URI prefix if present
+  let cleanBase64 = data;
+  if (cleanBase64.startsWith('data:')) {
+    const base64Index = cleanBase64.indexOf('base64,');
+    if (base64Index !== -1) {
+      cleanBase64 = cleanBase64.substring(base64Index + 7);
+    }
+  }
+  return cleanBase64 ? `data:${mime};base64,${cleanBase64}` : '/placeholder.png';
+};
+
 const ProductCard = ({ produit }: { produit: Produit }) => {
     const status = getStatus(produit.quantite);
     return (
@@ -114,10 +128,10 @@ export default function StockStatusPage() {
     return produits.filter(produit => {
       const searchMatch = searchTerm.trim() === '' ||
         produit.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        produit.modele.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        produit.marque.nom.toLowerCase().includes(searchTerm.toLowerCase());
+        produit.modele?.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        produit.marque?.nom?.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const categoryMatch = categoryFilter === 'all' || produit.modele.categorieId === categoryFilter;
+      const categoryMatch = categoryFilter === 'all' || produit.modele?.categorieId === categoryFilter;
       
       const locationMatch = locationFilter === 'all' || produit.emplacementId === locationFilter;
 
@@ -255,11 +269,11 @@ export default function StockStatusPage() {
                     return (
                       <TableRow key={produit.id} className="cursor-default">
                         <TableCell>
-                          <div className="font-medium">{produit.modele.nom}</div>
-                          <div className="text-sm text-muted-foreground">{produit.marque.nom}</div>
+                          <div className="font-medium">{produit.modele?.nom || 'N/A'}</div>
+                          <div className="text-sm text-muted-foreground">{produit.marque?.nom || 'N/A'}</div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline">{produit.modele.categorie.nom}</Badge>
+                          <Badge variant="outline">{produit.modele?.categorie?.nom || 'N/A'}</Badge>
                         </TableCell>
                         <TableCell>{produit.emplacement?.nom || 'N/A'}</TableCell>
                         <TableCell className="text-center font-bold">{produit.quantite}</TableCell>
@@ -373,7 +387,7 @@ function ProductDetailSheet({
               {coverImage ? (
                 <div className="w-full h-72 flex items-center justify-center bg-background">
                   <Image
-                    src={coverImage.data ? `data:${coverImage.mime};base64,${coverImage.data}` : '/placeholder.png'}
+                    src={getImageSrc(coverImage.data, coverImage.mime)}
                     alt={coverImage.filename}
                     width={640}
                     height={360}
@@ -399,7 +413,7 @@ function ProductDetailSheet({
                         >
                           <div className="h-20 w-20 flex items-center justify-center bg-background rounded-md">
                             <Image
-                              src={image.data ? `data:${image.mime};base64,${image.data}` : '/placeholder.png'}
+                              src={getImageSrc(image.data, image.mime)}
                               alt={image.filename}
                               width={80}
                               height={80}
@@ -416,9 +430,9 @@ function ProductDetailSheet({
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <DetailField label="Catégorie" value={produit.modele.categorie.nom} />
-              <DetailField label="Marque" value={produit.marque.nom} />
-              <DetailField label="Modèle" value={produit.modele.nom} />
+              <DetailField label="Catégorie" value={produit.modele?.categorie?.nom || 'N/A'} />
+              <DetailField label="Marque" value={produit.marque?.nom || 'N/A'} />
+              <DetailField label="Modèle" value={produit.modele?.nom || 'N/A'} />
               <DetailField label="Emplacement" value={produit.emplacement?.nom || 'N/A'} />
               <DetailField label="Quantité" value={String(produit.quantite)} />
               <DetailField label="SKU" value={produit.sku || '—'} />
