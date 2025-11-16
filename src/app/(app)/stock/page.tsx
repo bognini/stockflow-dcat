@@ -37,8 +37,8 @@ const ProductCard = ({ produit }: { produit: Produit }) => {
             <CardContent className="p-4 space-y-3">
                 <div className="flex justify-between items-start">
                     <div>
-                        <div className="font-bold">{produit.modele.nom}</div>
-                        <div className="text-sm text-muted-foreground">{produit.marque.nom}</div>
+                        <div className="font-bold">{produit.modele?.nom || 'N/A'}</div>
+                        <div className="text-sm text-muted-foreground">{produit.marque?.nom || 'N/A'}</div>
                     </div>
                      <Badge variant="outline" className="flex items-center justify-center gap-2 text-xs">
                         <span className={`h-2 w-2 rounded-full ${status.color}`} />
@@ -51,7 +51,7 @@ const ProductCard = ({ produit }: { produit: Produit }) => {
                 <div className="space-y-3 text-sm">
                     <div className="flex justify-between">
                         <span className="text-muted-foreground flex items-center gap-2"><Tag className="w-4 h-4" /> Catégorie</span>
-                        <Badge variant="secondary">{produit.modele.categorie.nom}</Badge>
+                        <Badge variant="secondary">{produit.modele?.categorie?.nom || 'N/A'}</Badge>
                     </div>
                      <div className="flex justify-between">
                         <span className="text-muted-foreground flex items-center gap-2"><Warehouse className="w-4 h-4" /> Emplacement</span>
@@ -358,13 +358,14 @@ function ProductDetailSheet({
             <Package className="h-5 w-5" /> {produit.nom}
           </SheetTitle>
           <SheetDescription>
-            {produit.marque.nom} • {produit.modele.nom}
+            {produit.marque?.nom} • {produit.modele?.nom}
           </SheetDescription>
         </SheetHeader>
 
         {loading ? (
           <div className="flex items-center justify-center py-10">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground ml-2">Chargement des détails...</p>
           </div>
         ) : !isEditing ? (
           <div className="space-y-6 mt-6">

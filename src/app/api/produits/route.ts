@@ -17,6 +17,7 @@ export async function GET() {
         modele: {
           include: {
             categorie: true,
+            marque: true,
           }
         },
         images: {
