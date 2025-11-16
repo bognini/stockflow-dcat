@@ -8,9 +8,10 @@ const paramsSchema = z.object({
   id: z.string().uuid(),
 });
 
-export async function GET(_: Request, context: { params: { id: string } }) {
+export async function GET(_: Request, context: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = paramsSchema.parse(context.params);
+    const params = await context.params;
+    const { id } = paramsSchema.parse(params);
     const produit = await prisma.produit.findUnique({
       where: { id },
       include: {
@@ -44,9 +45,10 @@ export async function GET(_: Request, context: { params: { id: string } }) {
   }
 }
 
-export async function PATCH(req: Request, context: { params: { id: string } }) {
+export async function PATCH(req: Request, context: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = paramsSchema.parse(context.params);
+    const params = await context.params;
+    const { id } = paramsSchema.parse(params);
     const body = await req.json();
     const data = productSchema.parse(body);
 
