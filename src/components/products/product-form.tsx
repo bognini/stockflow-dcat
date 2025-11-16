@@ -19,6 +19,7 @@ import {
   isAcceptedPhotoType,
 } from '@/lib/image-constraints';
 import type { Categorie, Emplacement, Marque, Modele, Produit } from '@/lib/types';
+import { resolveImageSrc } from '@/lib/image-utils';
 
 type ProductFormMode = 'create' | 'edit';
 
@@ -33,9 +34,10 @@ type SelectedImage = {
   id?: string;
   filename: string;
   mime: string;
-  base64: string;
+  base64?: string;
   preview: string;
   objectUrl?: string;
+  isNew?: boolean;
 };
 
 type ProductFormProps = {
@@ -110,26 +112,13 @@ function buildSelectedImages(product?: Produit | null): SelectedImage[] {
   return [...(product.images ?? [])]
     .sort((a, b) => a.order - b.order)
     .map((image) => {
-      // Ensure we have clean base64 data without data URI prefix
-      let cleanBase64 = image.data ?? '';
-      
-      // Remove data URI prefix if present
-      if (cleanBase64.startsWith('data:')) {
-        const base64Index = cleanBase64.indexOf('base64,');
-        if (base64Index !== -1) {
-          cleanBase64 = cleanBase64.substring(base64Index + 7);
-        }
-      }
-      
-      // Validate base64 data exists and is not empty
-      const isValidBase64 = cleanBase64 && cleanBase64.length > 0;
-      
+      const preview = resolveImageSrc(image);
       return {
         id: image.id,
         filename: image.filename,
         mime: image.mime,
-        base64: cleanBase64,
-        preview: isValidBase64 ? `data:${image.mime};base64,${cleanBase64}` : '',
+        base64: undefined,
+        preview,
       };
     });
 }
@@ -266,6 +255,7 @@ export function ProductForm({ mode, initialProduct, onSuccess, onCancel, title }
             base64,
             preview: objectUrl,
             objectUrl,
+            isNew: true,
           } satisfies SelectedImage;
         })
       );
@@ -358,12 +348,29 @@ export function ProductForm({ mode, initialProduct, onSuccess, onCancel, title }
 
     setIsSubmitting(true);
     try {
-      const imagesPayload = selectedImages.map((image, index) => ({
-        filename: image.filename,
-        mime: image.mime,
-        data: image.base64,
-        order: index,
-      }));
+      const imagesPayload = selectedImages.map((image, index) => {
+        const payload: {
+          id?: string;
+          filename: string;
+          mime: string;
+          data?: string;
+          order: number;
+        } = {
+          filename: image.filename,
+          mime: image.mime,
+          order: index,
+        };
+
+        if (image.id) {
+          payload.id = image.id;
+        }
+
+        if (image.base64) {
+          payload.data = image.base64;
+        }
+
+        return payload;
+      });
 
       const payload = {
         nom: formValues.nom.trim(),

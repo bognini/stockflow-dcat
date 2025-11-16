@@ -8,6 +8,7 @@ export type ProduitImage = {
   data: string | null;
   order: number;
   createdAt: string;
+  url: string | null;
 };
 
 export type Produit = ProduitDB & {

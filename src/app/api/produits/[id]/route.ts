@@ -2,7 +2,7 @@ import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 import { Buffer } from 'buffer';
 import { z } from 'zod';
-import { productSchema, serializeImage } from '../utils';
+import { updateProductSchema, serializeImage } from '../utils';
 
 const paramsSchema = z.object({
   id: z.string().uuid(),
@@ -34,7 +34,9 @@ export async function GET(_: Request, context: { params: Promise<{ id: string }>
 
     return NextResponse.json({
       ...produit,
-      images: produit.images.map(serializeImage),
+      images: produit.images.map((image) =>
+        serializeImage(image, { includeData: false, productId: produit.id })
+      ),
     });
   } catch (error) {
     console.error('[API_PRODUIT_DETAIL_GET_ERROR]', error);
@@ -50,10 +52,13 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
     const params = await context.params;
     const { id } = paramsSchema.parse(params);
     const body = await req.json();
-    const data = productSchema.parse(body);
+    const data = updateProductSchema.parse(body);
 
     const updated = await prisma.$transaction(async (tx) => {
-      const existing = await tx.produit.findUnique({ where: { id } });
+      const existing = await tx.produit.findUnique({
+        where: { id },
+        include: { images: true },
+      });
       if (!existing) {
         throw new Error('Produit non trouvé');
       }
@@ -79,18 +84,55 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
         },
       });
 
-      await tx.produitImage.deleteMany({ where: { produitId: id } });
-      await tx.produitImage.createMany({
-        data: data.images.map((image, index) => ({
-          produitId: id,
-          filename: image.filename,
-          mime: image.mime,
-          data: Buffer.from(image.data, 'base64'),
-          sortOrder: index,
-        })),
-      });
+      const existingImagesMap = new Map(existing.images.map((image) => [image.id, image]));
 
-      // Fetch the complete product with all nested relations
+      const payloadImages = data.images.map((image, index) => ({
+        ...image,
+        order: image.order ?? index,
+      }));
+
+      const payloadIds = new Set(payloadImages.map((image) => image.id).filter(Boolean) as string[]);
+      const idsToDelete = existing.images
+        .filter((image) => !payloadIds.has(image.id))
+        .map((image) => image.id);
+
+      if (idsToDelete.length > 0) {
+        await tx.produitImage.deleteMany({
+          where: { id: { in: idsToDelete } },
+        });
+      }
+
+      for (const [index, image] of payloadImages.entries()) {
+        const sortOrder = image.order ?? index;
+        if (image.id) {
+          if (!existingImagesMap.has(image.id)) {
+            throw new Error('Image introuvable pour ce produit');
+          }
+          const updateData: Record<string, unknown> = {
+            filename: image.filename,
+            mime: image.mime,
+            sortOrder,
+          };
+          if (image.data) {
+            updateData.data = Buffer.from(image.data, 'base64');
+          }
+          await tx.produitImage.update({
+            where: { id: image.id },
+            data: updateData,
+          });
+        } else {
+          await tx.produitImage.create({
+            data: {
+              produitId: id,
+              filename: image.filename,
+              mime: image.mime,
+              data: Buffer.from(image.data!, 'base64'),
+              sortOrder,
+            },
+          });
+        }
+      }
+
       const produit = await tx.produit.findUnique({
         where: { id },
         include: {
@@ -113,7 +155,9 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
 
       return {
         ...produit,
-        images: produit.images.map(serializeImage),
+        images: produit.images.map((image) =>
+          serializeImage(image, { includeData: false, productId: produit.id })
+        ),
       };
     });
 

@@ -2,10 +2,7 @@ import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 import { Buffer } from 'buffer';
 import { z } from 'zod';
-import {
-  productSchema,
-  serializeImage,
-} from './utils';
+import { createProductSchema, serializeImage } from './utils';
 
 export async function GET() {
   try {
@@ -25,6 +22,7 @@ export async function GET() {
             id: true,
             filename: true,
             mime: true,
+            produitId: true,
             sortOrder: true,
             createdAt: true,
             // Explicitly exclude 'data' field for performance
@@ -38,17 +36,17 @@ export async function GET() {
         nom: 'asc',
       }
     });
-    // Map images without data field (data will be null)
     const serialized = produits.map((produit) => ({
       ...produit,
-      images: produit.images.map((img) => ({
-        id: img.id,
-        filename: img.filename,
-        mime: img.mime,
-        data: null, // No image data in list view
-        order: img.sortOrder,
-        createdAt: img.createdAt.toISOString(),
-      })),
+      images: produit.images.map((img) =>
+        serializeImage(
+          {
+            ...img,
+            data: undefined,
+          },
+          { productId: produit.id, includeData: false }
+        )
+      ),
     }));
     return NextResponse.json(serialized);
   } catch (error) {
@@ -60,7 +58,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const data = productSchema.parse(body);
+    const data = createProductSchema.parse(body);
 
     const produit = await prisma.$transaction(async (tx) => {
       const created = await tx.produit.create({
@@ -116,7 +114,9 @@ export async function POST(req: Request) {
 
       return {
         ...produit,
-        images: produit.images.map(serializeImage),
+        images: produit.images.map((image) =>
+          serializeImage(image, { includeData: true, productId: produit.id })
+        ),
       };
     });
 

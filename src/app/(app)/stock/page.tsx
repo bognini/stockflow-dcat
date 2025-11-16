@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import Image from 'next/image';
 import { ProductForm } from '@/components/products/product-form';
+import { PLACEHOLDER_IMAGE, resolveImageSrc } from '@/lib/image-utils';
 
 const getStatus = (quantity: number) => {
     if (quantity === 0) return { text: 'En rupture', color: 'bg-red-500', progress: 0, className: 'text-red-600' };
@@ -30,29 +31,7 @@ const getStatus = (quantity: number) => {
     return { text: 'En stock', color: 'bg-green-500', progress: Math.min(100, (quantity / 10) * 100), className: 'text-green-600' };
 };
 
-// Helper to safely construct image data URI
-const getImageSrc = (data: string | null | undefined, mime: string) => {
-  // Return placeholder if no data or empty string
-  if (!data || typeof data !== 'string' || data.trim().length === 0) {
-    return '/placeholder.png';
-  }
-  
-  // Remove data URI prefix if present
-  let cleanBase64 = data.trim();
-  if (cleanBase64.startsWith('data:')) {
-    const base64Index = cleanBase64.indexOf('base64,');
-    if (base64Index !== -1) {
-      cleanBase64 = cleanBase64.substring(base64Index + 7);
-    }
-  }
-  
-  // Validate we have actual base64 data
-  if (!cleanBase64 || cleanBase64.length === 0) {
-    return '/placeholder.png';
-  }
-  
-  return `data:${mime};base64,${cleanBase64}`;
-};
+// Image helpers now centralized in @/lib/image-utils
 
 const ProductCard = ({ produit }: { produit: Produit }) => {
     const status = getStatus(produit.quantite);
@@ -352,6 +331,19 @@ function ProductDetailSheet({
   loading: boolean;
 }) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const produitId = produit?.id ?? null;
+
+  useEffect(() => {
+    setActiveImageIndex(0);
+  }, [produitId]);
+
+  const detailImages = useMemo(() => {
+    if (!produit) return [] as (Produit['images'][number] & { resolvedSrc: string })[];
+    return (produit.images ?? []).map((image) => ({
+      ...image,
+      resolvedSrc: resolveImageSrc(image),
+    }));
+  }, [produit]);
 
   if (!produit) {
     return (
@@ -366,8 +358,11 @@ function ProductDetailSheet({
     );
   }
 
-  const galleryImages = produit.images ?? [];
-  const coverImage = galleryImages[activeImageIndex] ?? galleryImages[0];
+  const coverImage = detailImages[activeImageIndex] ?? detailImages[0];
+  const coverSrc = coverImage?.resolvedSrc ?? PLACEHOLDER_IMAGE;
+  const handleImageError = useCallback((event: React.SyntheticEvent<HTMLImageElement>) => {
+    event.currentTarget.src = PLACEHOLDER_IMAGE;
+  }, []);
 
   return (
     <Sheet open={open} onOpenChange={(value) => {
@@ -397,24 +392,23 @@ function ProductDetailSheet({
               {coverImage ? (
                 <div className="w-full h-72 flex items-center justify-center bg-background">
                   <Image
-                    src={getImageSrc(coverImage.data, coverImage.mime)}
+                    src={coverSrc}
                     alt={coverImage.filename}
                     width={640}
                     height={360}
                     className="max-h-full max-w-full object-contain"
-                    onError={(e) => {
-                      // Fallback to placeholder on error
-                      e.currentTarget.src = '/placeholder.png';
-                    }}
+                    loading="eager"
+                    unoptimized
+                    onError={handleImageError}
                   />
                 </div>
               ) : (
                 <div className="h-60 flex items-center justify-center bg-muted">Aucune image</div>
               )}
-              {galleryImages.length > 1 && (
+              {detailImages.length > 1 && (
                 <ScrollArea className="w-full">
                   <div className="flex gap-2 p-4">
-                    {galleryImages.map((image, index) => {
+                    {detailImages.map((image, index) => {
                       const isActive = index === activeImageIndex;
                       return (
                         <button
@@ -427,14 +421,14 @@ function ProductDetailSheet({
                         >
                           <div className="h-20 w-20 flex items-center justify-center bg-background rounded-md">
                             <Image
-                              src={getImageSrc(image.data, image.mime)}
+                              src={image.resolvedSrc}
                               alt={image.filename}
                               width={80}
                               height={80}
                               className="max-h-full max-w-full object-contain"
-                              onError={(e) => {
-                                e.currentTarget.src = '/placeholder.png';
-                              }}
+                              loading="lazy"
+                              unoptimized
+                              onError={handleImageError}
                             />
                           </div>
                         </button>
