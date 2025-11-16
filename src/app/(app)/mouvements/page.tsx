@@ -827,7 +827,9 @@ export default function MovementsPage() {
     const [loading, setLoading] = useState(true);
     const [mouvements, setMouvements] = useState<MouvementStock[]>([]);
     const [formData, setFormData] = useState<MouvementFormData | null>(null);
-    const [activeTab, setActiveTab] = useState<'entree' | 'sortie' | 'historique'>('entree');
+    // Technicians start on historique tab, others on entree
+    const defaultTab = user?.role === 'technician' ? 'historique' : 'entree';
+    const [activeTab, setActiveTab] = useState<'entree' | 'sortie' | 'historique'>(defaultTab);
 
     const fetchData = async () => {
       try {
@@ -849,12 +851,12 @@ export default function MovementsPage() {
     };
     
     useEffect(() => {
-        if (user && ['admin', 'marketing'].includes(user.role)) {
+        if (user && ['admin', 'marketing', 'technician'].includes(user.role)) {
             fetchData();
         }
     }, [user]);
 
-    if (!user || !['admin', 'marketing'].includes(user.role)) {
+    if (!user || !['admin', 'marketing', 'technician'].includes(user.role)) {
         return (
             <Card className="flex flex-col items-center justify-center text-center p-10 min-h-[400px]">
                 <CardHeader>
@@ -870,6 +872,9 @@ export default function MovementsPage() {
         )
     }
     
+    // Technicians can only view history, not create movements
+    const canCreateMovements = user && ['admin', 'marketing'].includes(user.role);
+    
     if (loading || !formData) {
       return <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary"/></div>;
     }
@@ -877,25 +882,29 @@ export default function MovementsPage() {
   return (
     <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)} className="w-full">
       <ScrollArea className="w-full whitespace-nowrap">
-        <TabsList className="grid w-full grid-cols-3 md:inline-flex md:w-auto">
-          <TabsTrigger value="entree">Entrée de stock</TabsTrigger>
-          <TabsTrigger value="sortie">Sortie de stock</TabsTrigger>
+        <TabsList className={canCreateMovements ? "grid w-full grid-cols-3 md:inline-flex md:w-auto" : "grid w-full grid-cols-1 md:inline-flex md:w-auto"}>
+          {canCreateMovements && <TabsTrigger value="entree">Entrée de stock</TabsTrigger>}
+          {canCreateMovements && <TabsTrigger value="sortie">Sortie de stock</TabsTrigger>}
           <TabsTrigger value="historique">Historique</TabsTrigger>
         </TabsList>
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
-      <TabsContent value="entree" className="mt-4">
-        <EntreeStockTab user={user} formData={formData} onMouvementAdded={() => {
-          fetchData();
-          setActiveTab('entree');
-        }} />
-      </TabsContent>
-      <TabsContent value="sortie" className="mt-4">
-        <SortieStockTab user={user} formData={formData} onMouvementAdded={() => {
-          fetchData();
-          setActiveTab('sortie');
-        }} />
-      </TabsContent>
+      {canCreateMovements && (
+        <TabsContent value="entree" className="mt-4">
+          <EntreeStockTab user={user} formData={formData} onMouvementAdded={() => {
+            fetchData();
+            setActiveTab('entree');
+          }} />
+        </TabsContent>
+      )}
+      {canCreateMovements && (
+        <TabsContent value="sortie" className="mt-4">
+          <SortieStockTab user={user} formData={formData} onMouvementAdded={() => {
+            fetchData();
+            setActiveTab('sortie');
+          }} />
+        </TabsContent>
+      )}
       <TabsContent value="historique" className="mt-4">
         <HistoriqueTab mouvements={mouvements} utilisateurs={formData.utilisateurs} />
       </TabsContent>

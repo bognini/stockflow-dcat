@@ -109,13 +109,17 @@ function buildSelectedImages(product?: Produit | null): SelectedImage[] {
   if (!product) return [];
   return [...(product.images ?? [])]
     .sort((a, b) => a.order - b.order)
-    .map((image) => ({
-      id: image.id,
-      filename: image.filename,
-      mime: image.mime,
-      base64: image.data ?? '',
-      preview: image.data ? `data:${image.mime};base64,${image.data}` : '',
-    }));
+    .map((image) => {
+      // Ensure we have clean base64 data without data URI prefix
+      const cleanBase64 = image.data ?? '';
+      return {
+        id: image.id,
+        filename: image.filename,
+        mime: image.mime,
+        base64: cleanBase64,
+        preview: cleanBase64 ? `data:${image.mime};base64,${cleanBase64}` : '',
+      };
+    });
 }
 
 function revokeObjectUrls(images: SelectedImage[]) {
@@ -276,6 +280,30 @@ export function ProductForm({ mode, initialProduct, onSuccess, onCancel, title }
     });
   };
 
+  const handleDragStart = (event: React.DragEvent<HTMLDivElement>, index: number) => {
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', index.toString());
+  };
+
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>, dropIndex: number) => {
+    event.preventDefault();
+    const dragIndex = parseInt(event.dataTransfer.getData('text/plain'), 10);
+    
+    if (dragIndex === dropIndex) return;
+
+    setSelectedImages((prev) => {
+      const next = [...prev];
+      const [draggedItem] = next.splice(dragIndex, 1);
+      next.splice(dropIndex, 0, draggedItem);
+      return next;
+    });
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -418,6 +446,7 @@ export function ProductForm({ mode, initialProduct, onSuccess, onCancel, title }
         <div className="space-y-2">
           <Label htmlFor="modeleId">Modèle</Label>
           <Select
+            key={`modele-${selectedModeleId || 'empty'}`}
             value={selectedModeleId || undefined}
             onValueChange={(value) => setSelectedModeleId(value)}
             required
@@ -487,7 +516,11 @@ export function ProductForm({ mode, initialProduct, onSuccess, onCancel, title }
 
       <div className="space-y-2">
         <Label htmlFor="emplacementId">Emplacement</Label>
-        <Select value={formValues.emplacementId || undefined} onValueChange={(value) => handleFieldChange('emplacementId', value)}>
+        <Select 
+          key={`emplacement-${formValues.emplacementId || 'empty'}`}
+          value={formValues.emplacementId || undefined} 
+          onValueChange={(value) => handleFieldChange('emplacementId', value)}
+        >
           <SelectTrigger id="emplacementId">
             <SelectValue placeholder="Sélectionner un emplacement" />
           </SelectTrigger>
@@ -578,14 +611,24 @@ export function ProductForm({ mode, initialProduct, onSuccess, onCancel, title }
         {selectedImages.length > 0 && (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             {selectedImages.map((image, index) => (
-              <div key={`${image.preview}-${index}`} className="relative group">
+              <div 
+                key={`${image.preview}-${index}`} 
+                className="relative group cursor-move"
+                draggable
+                onDragStart={(e) => handleDragStart(e, index)}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, index)}
+              >
                 <Image
                   src={image.preview || `data:${image.mime};base64,${image.base64}`}
                   alt={image.filename}
                   width={160}
                   height={160}
-                  className="h-24 w-full rounded-md object-cover"
+                  className="h-24 w-full rounded-md object-cover pointer-events-none"
                 />
+                <div className="absolute top-1 left-1 bg-black/60 text-white text-xs px-1.5 py-0.5 rounded">
+                  {index + 1}
+                </div>
                 <Button
                   type="button"
                   variant="destructive"

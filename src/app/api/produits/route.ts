@@ -9,6 +9,7 @@ import {
 
 export async function GET() {
   try {
+    // Don't load image data in list view for performance - only load metadata
     const produits = await prisma.produit.findMany({
       include: {
         marque: true,
@@ -19,6 +20,14 @@ export async function GET() {
           }
         },
         images: {
+          select: {
+            id: true,
+            filename: true,
+            mime: true,
+            sortOrder: true,
+            createdAt: true,
+            // Explicitly exclude 'data' field for performance
+          },
           orderBy: {
             sortOrder: 'asc',
           },
@@ -28,9 +37,17 @@ export async function GET() {
         nom: 'asc',
       }
     });
+    // Map images without data field (data will be null)
     const serialized = produits.map((produit) => ({
       ...produit,
-      images: produit.images.map(serializeImage),
+      images: produit.images.map((img) => ({
+        id: img.id,
+        filename: img.filename,
+        mime: img.mime,
+        data: null, // No image data in list view
+        order: img.sortOrder,
+        createdAt: img.createdAt.toISOString(),
+      })),
     }));
     return NextResponse.json(serialized);
   } catch (error) {

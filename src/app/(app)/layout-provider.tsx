@@ -81,7 +81,7 @@ function AppShellContent({ user, pathname, pageTitle, children }: AppShellConten
               alt="Logo DCAT"
               width={40}
               height={40}
-              className="h-10 w-10 rounded-md object-contain shadow-sm"
+              className="h-10 w-10 rounded-md object-contain shadow-sm ring-2 ring-white"
               priority
             />
             <span className="text-lg font-headline font-bold leading-tight">StockFlow DCAT</span>
