@@ -93,14 +93,30 @@ export async function POST(req: Request) {
         })),
       });
 
-      const images = await tx.produitImage.findMany({
-        where: { produitId: created.id },
-        orderBy: { sortOrder: 'asc' },
+      // Fetch the complete product with all nested relations
+      const produit = await tx.produit.findUnique({
+        where: { id: created.id },
+        include: {
+          marque: true,
+          emplacement: true,
+          modele: {
+            include: {
+              categorie: true,
+            },
+          },
+          images: {
+            orderBy: { sortOrder: 'asc' },
+          },
+        },
       });
 
+      if (!produit) {
+        throw new Error('Produit non trouvé après création');
+      }
+
       return {
-        ...created,
-        images: images.map(serializeImage),
+        ...produit,
+        images: produit.images.map(serializeImage),
       };
     });
 

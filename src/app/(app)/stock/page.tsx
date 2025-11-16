@@ -32,16 +32,26 @@ const getStatus = (quantity: number) => {
 
 // Helper to safely construct image data URI
 const getImageSrc = (data: string | null | undefined, mime: string) => {
-  if (!data || data.length === 0) return '/placeholder.png';
+  // Return placeholder if no data or empty string
+  if (!data || typeof data !== 'string' || data.trim().length === 0) {
+    return '/placeholder.png';
+  }
+  
   // Remove data URI prefix if present
-  let cleanBase64 = data;
+  let cleanBase64 = data.trim();
   if (cleanBase64.startsWith('data:')) {
     const base64Index = cleanBase64.indexOf('base64,');
     if (base64Index !== -1) {
       cleanBase64 = cleanBase64.substring(base64Index + 7);
     }
   }
-  return cleanBase64 ? `data:${mime};base64,${cleanBase64}` : '/placeholder.png';
+  
+  // Validate we have actual base64 data
+  if (!cleanBase64 || cleanBase64.length === 0) {
+    return '/placeholder.png';
+  }
+  
+  return `data:${mime};base64,${cleanBase64}`;
 };
 
 const ProductCard = ({ produit }: { produit: Produit }) => {
@@ -372,7 +382,7 @@ function ProductDetailSheet({
             <Package className="h-5 w-5" /> {produit.nom}
           </SheetTitle>
           <SheetDescription>
-            {produit.marque?.nom} • {produit.modele?.nom}
+            {produit.marque?.nom ?? 'N/A'} • {produit.modele?.nom ?? 'N/A'}
           </SheetDescription>
         </SheetHeader>
 
@@ -392,6 +402,10 @@ function ProductDetailSheet({
                     width={640}
                     height={360}
                     className="max-h-full max-w-full object-contain"
+                    onError={(e) => {
+                      // Fallback to placeholder on error
+                      e.currentTarget.src = '/placeholder.png';
+                    }}
                   />
                 </div>
               ) : (
@@ -418,6 +432,9 @@ function ProductDetailSheet({
                               width={80}
                               height={80}
                               className="max-h-full max-w-full object-contain"
+                              onError={(e) => {
+                                e.currentTarget.src = '/placeholder.png';
+                              }}
                             />
                           </div>
                         </button>
@@ -430,13 +447,13 @@ function ProductDetailSheet({
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <DetailField label="Catégorie" value={produit.modele?.categorie?.nom || 'N/A'} />
-              <DetailField label="Marque" value={produit.marque?.nom || 'N/A'} />
-              <DetailField label="Modèle" value={produit.modele?.nom || 'N/A'} />
-              <DetailField label="Emplacement" value={produit.emplacement?.nom || 'N/A'} />
-              <DetailField label="Quantité" value={String(produit.quantite)} />
-              <DetailField label="SKU" value={produit.sku || '—'} />
-              <DetailField label="GTIN" value={produit.gtin || '—'} />
+              <DetailField label="Catégorie" value={produit.modele?.categorie?.nom ?? 'N/A'} />
+              <DetailField label="Marque" value={produit.marque?.nom ?? 'N/A'} />
+              <DetailField label="Modèle" value={produit.modele?.nom ?? 'N/A'} />
+              <DetailField label="Emplacement" value={produit.emplacement?.nom ?? 'N/A'} />
+              <DetailField label="Quantité" value={String(produit.quantite ?? 0)} />
+              <DetailField label="SKU" value={produit.sku ?? '—'} />
+              <DetailField label="GTIN" value={produit.gtin ?? '—'} />
               <DetailField label="Poids" value={produit.poids ? `${produit.poids} kg` : '—'} />
             </div>
 
