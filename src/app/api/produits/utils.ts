@@ -116,7 +116,7 @@ type PrismaImage = {
   produitId?: string;
   filename: string;
   mime: string;
-  data?: Buffer | null;
+  data?: Buffer | Uint8Array | null;
   sortOrder: number;
   createdAt: Date;
 };
@@ -132,12 +132,17 @@ export const serializeImage = (
 ): SerializedImage => {
   const { includeData = false, productId } = options;
   const resolvedProductId = productId ?? (image as PrismaImage & { produitId?: string }).produitId;
+  const normalizedData = image.data
+    ? image.data instanceof Buffer
+      ? image.data
+      : Buffer.from(image.data)
+    : null;
 
   return {
     id: image.id,
     filename: image.filename,
     mime: image.mime,
-    data: includeData && image.data ? image.data.toString('base64') : null,
+    data: includeData && normalizedData ? normalizedData.toString('base64') : null,
     order: image.sortOrder,
     createdAt: image.createdAt.toISOString(),
     url: resolvedProductId ? `/api/produits/${resolvedProductId}/images/${image.id}` : null,
