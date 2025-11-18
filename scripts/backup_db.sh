@@ -38,3 +38,9 @@ for FILE in "${BACKUP_FILES[@]}"; do
     rm -f "$FILE"
   fi
 done
+
+if [[ -n "${BACKUP_REMOTE_HOST:-}" && -n "${BACKUP_REMOTE_PATH:-}" ]]; then
+  RSYNC_USER="${BACKUP_REMOTE_USER:-$USER}"
+  echo "[backup] syncing backups to ${RSYNC_USER}@${BACKUP_REMOTE_HOST}:${BACKUP_REMOTE_PATH}"
+  rsync -az --delete "$BACKUP_DIR/" "${RSYNC_USER}@${BACKUP_REMOTE_HOST}:${BACKUP_REMOTE_PATH}"
+fi

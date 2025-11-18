@@ -69,6 +69,50 @@ gzip -dc backups/stockflow_dcat_<timestamp>.sql.gz | docker exec -i stockflow_dc
 
 Schedule the script via cron on the VM to keep daily snapshots, then copy them to off-site storage.
 
+#### Production cron setup
+
+1. SSH into the VM and make the script executable:
+   ```bash
+   ssh deploy@172.23.98.146
+   cd /var/www/stockflow
+   chmod +x scripts/backup_db.sh
+   ```
+2. Add the daily job at 02:00 (fills `/var/log/stockflow_backup.log`):
+   ```bash
+   crontab -e
+   # add:
+   0 2 * * * cd /var/www/stockflow && ./scripts/backup_db.sh >> /var/log/stockflow_backup.log 2>&1
+   ```
+3. Confirm with `crontab -l` and check new dumps under `backups/`.
+
+#### Log rotation for backup logs
+
+Create `/etc/logrotate.d/stockflow-backup` on the VM:
+
+```
+/var/log/stockflow_backup.log {
+  weekly
+  rotate 4
+  compress
+  missingok
+  notifempty
+}
+```
+
+This prevents the log file from growing indefinitely while keeping a month of history.
+
+#### Optional off-site sync
+
+Set these environment variables (e.g., append to `/var/www/stockflow/.env`) if you want backups copied to another host after each run:
+
+```
+BACKUP_REMOTE_HOST=backup.example.com
+BACKUP_REMOTE_USER=backup
+BACKUP_REMOTE_PATH=/srv/stockflow-backups
+```
+
+The script will `rsync -az --delete` the local `backups/` directory to the remote destination, ensuring both locations stay in sync.
+
 ### CI checks
 
 GitHub Actions run before each merge/push:
