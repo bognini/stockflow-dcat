@@ -85,6 +85,18 @@ Schedule the script via cron on the VM to keep daily snapshots, then copy them t
    ```
 3. Confirm with `crontab -l` and check new dumps under `backups/`.
 
+#### Verify nightly runs
+
+- Inspect `/var/log/stockflow_backup.log` the next morning:
+  ```bash
+  sudo tail -n 50 /var/log/stockflow_backup.log
+  ```
+- List local backups (only the 7 newest should remain):
+  ```bash
+  ls -lh backups/
+  ```
+- If the cron job fails, the log will show the error and (with alerts configured below) you will receive an email.
+
 #### Log rotation for backup logs
 
 Create `/etc/logrotate.d/stockflow-backup` on the VM:
@@ -101,6 +113,17 @@ Create `/etc/logrotate.d/stockflow-backup` on the VM:
 
 This prevents the log file from growing indefinitely while keeping a month of history.
 
+#### Cron failure alerts
+
+At the top of `crontab -e`, set a `MAILTO` value so cron emails you when a backup run exits with a non-zero status:
+
+```
+MAILTO=alerts@dcat.ci
+0 2 * * * cd /var/www/stockflow && ./scripts/backup_db.sh >> /var/log/stockflow_backup.log 2>&1
+```
+
+Configure your VM's MTA (e.g., `postfix` or `msmtp`) so outgoing mail reaches that address. Alternatively, replace `MAILTO` with a wrapper script that posts to Slack/Teams/Webhook if a failure occurs.
+
 #### Optional off-site sync
 
 Set these environment variables (e.g., append to `/var/www/stockflow/.env`) if you want backups copied to another host after each run:
@@ -112,6 +135,22 @@ BACKUP_REMOTE_PATH=/srv/stockflow-backups
 ```
 
 The script will `rsync -az --delete` the local `backups/` directory to the remote destination, ensuring both locations stay in sync.
+
+For a Synology NAS target:
+
+1. Enable SSH access on the NAS and create a dedicated `stockflow-backup` user with permissions to the destination shared folder.
+2. From the VM, generate an SSH key (if not already present) and copy the public key to the NAS:
+   ```bash
+   ssh-keygen -t ed25519 -f ~/.ssh/stockflow-backup
+   ssh stockflow-backup@nas.example.com 'mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys' < ~/.ssh/stockflow-backup.pub
+   ```
+3. Set the following in `/var/www/stockflow/.env`:
+   ```
+   BACKUP_REMOTE_HOST=nas.example.com
+   BACKUP_REMOTE_USER=stockflow-backup
+   BACKUP_REMOTE_PATH=/volume1/backups/stockflow
+   ```
+4. Run `./scripts/backup_db.sh` once to perform the initial sync. Subsequent cron runs will automatically mirror `backups/` to the NAS.
 
 ### CI checks
 
