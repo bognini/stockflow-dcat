@@ -638,6 +638,7 @@ export function ProductForm({ mode, initialProduct, onSuccess, onCancel, title }
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, index)}
               >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={image.preview || (image.base64 ? `data:${image.mime};base64,${image.base64}` : '')}
                   alt={image.filename}

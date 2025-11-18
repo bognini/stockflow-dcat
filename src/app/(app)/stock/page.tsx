@@ -488,6 +488,10 @@ function ProductDetailSheet({
     }
   };
 
+  const handleImageError = useCallback((event: React.SyntheticEvent<HTMLImageElement>) => {
+    event.currentTarget.src = PLACEHOLDER_IMAGE;
+  }, []);
+
   if (!produit) {
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
@@ -503,9 +507,6 @@ function ProductDetailSheet({
 
   const coverImage = detailImages[activeImageIndex] ?? detailImages[0];
   const coverSrc = coverImage?.resolvedSrc ?? PLACEHOLDER_IMAGE;
-  const handleImageError = useCallback((event: React.SyntheticEvent<HTMLImageElement>) => {
-    event.currentTarget.src = PLACEHOLDER_IMAGE;
-  }, []);
 
   return (
     <Sheet open={open} onOpenChange={(value) => {
