@@ -365,7 +365,6 @@ function HistoriqueTab({ mouvements, utilisateurs, isLoading }: HistoriqueTabPro
                         </TableCell>
                     </TableRow>
                  )}
-                )}
               </TableBody>
             </Table>
             <ScrollBar orientation="horizontal" />
