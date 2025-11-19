@@ -58,6 +58,7 @@ type FormValues = {
   prixAchat: string;
   coutLogistique: string;
   prixVente: string;
+  seuilAlerte: string;
   emplacementId: string;
 };
 
@@ -71,6 +72,7 @@ const emptyFormValues: FormValues = {
   prixAchat: '',
   coutLogistique: '',
   prixVente: '',
+  seuilAlerte: '',
   emplacementId: '',
 };
 
@@ -103,6 +105,7 @@ function buildFormValues(product?: Produit | null): FormValues {
     prixAchat: product.prixAchat ? String(product.prixAchat) : '',
     coutLogistique: product.coutLogistique ? String(product.coutLogistique) : '',
     prixVente: product.prixVente ? String(product.prixVente) : '',
+    seuilAlerte: product.seuilAlerte ? String(product.seuilAlerte) : '',
     emplacementId: product.emplacementId ?? '',
   };
 }
@@ -191,6 +194,14 @@ export function ProductForm({ mode, initialProduct, onSuccess, onCancel, title }
     if (value.trim() === '') return undefined;
     const parsed = Number(value);
     return Number.isNaN(parsed) ? undefined : parsed;
+  };
+
+  const parseInteger = (value: string) => {
+    if (value.trim() === '') return undefined;
+    const parsed = Number(value);
+    if (Number.isNaN(parsed)) return undefined;
+    const intValue = Math.trunc(parsed);
+    return intValue >= 0 ? intValue : undefined;
   };
 
   const handleFieldChange = (field: keyof FormValues, value: string) => {
@@ -382,6 +393,7 @@ export function ProductForm({ mode, initialProduct, onSuccess, onCancel, title }
         prixAchat: parseNumber(formValues.prixAchat),
         coutLogistique: parseNumber(formValues.coutLogistique),
         prixVente: parseNumber(formValues.prixVente),
+        seuilAlerte: parseInteger(formValues.seuilAlerte),
         quantite: mode === 'edit' ? initialProduct?.quantite ?? 0 : 0,
         modeleId: selectedModeleId,
         marqueId: modele.marqueId,
@@ -580,7 +592,7 @@ export function ProductForm({ mode, initialProduct, onSuccess, onCancel, title }
           </div>
           <div className="space-y-2">
             <Label htmlFor="prixVente" className="text-xs text-muted-foreground">
-              Prix de vente
+              Prix de vente minimum
             </Label>
             <Input
               id="prixVente"
@@ -589,6 +601,20 @@ export function ProductForm({ mode, initialProduct, onSuccess, onCancel, title }
               onChange={(event) => handleFieldChange('prixVente', event.target.value)}
             />
           </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="seuilAlerte">Seuil d'alerte (quantité)</Label>
+          <Input
+            id="seuilAlerte"
+            type="number"
+            min="0"
+            value={formValues.seuilAlerte}
+            onChange={(event) => handleFieldChange('seuilAlerte', event.target.value)}
+            placeholder="ex: 5"
+          />
         </div>
       </div>
 

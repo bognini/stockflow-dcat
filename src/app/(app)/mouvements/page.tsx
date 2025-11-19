@@ -25,7 +25,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { ArrowDown, ArrowUp, Calendar as CalendarIcon, User, Package, MapPin, ShieldAlert, UploadCloud, ChevronsRight, Loader2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, Calendar as CalendarIcon, User, Package, MapPin, ShieldAlert, UploadCloud, ChevronsRight, Loader2, DollarSign } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -48,6 +48,8 @@ import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const currencyFormatter = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF' });
+const formatCurrency = (value: number) => currencyFormatter.format(value);
 
 async function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -105,6 +107,12 @@ const MouvementCard = ({ mouvement }: { mouvement: MouvementStock }) => {
                 </div>
 
                 <div className="space-y-2 text-sm">
+                    {isEntree && mouvement.fournisseur && (
+                        <div className="flex justify-between">
+                            <span className="text-muted-foreground flex items-center gap-2"><Package className="w-4 h-4" /> Fournisseur</span>
+                            <span className="text-right">{mouvement.fournisseur.nom}</span>
+                        </div>
+                    )}
                     {mouvement.destination && (
                         <div className="flex justify-between">
                             <span className="text-muted-foreground flex items-center gap-2"><MapPin className="w-4 h-4" /> Destination</span>
@@ -127,6 +135,12 @@ const MouvementCard = ({ mouvement }: { mouvement: MouvementStock }) => {
                          <div className="flex justify-between">
                             <span className="text-muted-foreground flex items-center gap-2"><User className="w-4 h-4" /> Opérateur</span>
                             <span>{mouvement.utilisateur.nom}</span>
+                        </div>
+                    )}
+                    {mouvement.type === 'SORTIE' && mouvement.prixVenteDefinitif && (
+                         <div className="flex justify-between">
+                            <span className="text-muted-foreground flex items-center gap-2"><DollarSign className="w-4 h-4" /> Prix définitif</span>
+                            <span>{formatCurrency(mouvement.prixVenteDefinitif)}</span>
                         </div>
                     )}
                 </div>
@@ -228,11 +242,10 @@ function HistoriqueTab({ mouvements, utilisateurs }: { mouvements: MouvementStoc
                 <TableRow>
                   <TableHead>Date</TableHead>
                   <TableHead>Produit</TableHead>
-                  <TableHead>Utilisateur</TableHead>
                   <TableHead className="text-center">Type</TableHead>
                   <TableHead className="text-center">Quantité</TableHead>
-                  <TableHead>Destination/Projet</TableHead>
-                  <TableHead>Demandeur</TableHead>
+                  <TableHead>Utilisateur</TableHead>
+                  <TableHead>Détails</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -245,7 +258,6 @@ function HistoriqueTab({ mouvements, utilisateurs }: { mouvements: MouvementStoc
                       <TableCell className="font-medium">
                         {mouvement.produit.modele.nom}
                       </TableCell>
-                      <TableCell>{mouvement.utilisateur.nom}</TableCell>
                       <TableCell className="text-center">
                         <Badge
                           variant={mouvement.type === 'ENTREE' ? 'secondary' : 'outline'}
@@ -273,13 +285,26 @@ function HistoriqueTab({ mouvements, utilisateurs }: { mouvements: MouvementStoc
                         {mouvement.type === 'ENTREE' ? '+' : '-'}
                         {mouvement.quantite}
                       </TableCell>
+                      <TableCell>{mouvement.utilisateur.nom}</TableCell>
                       <TableCell>
-                        <div className="font-medium">{mouvement.destination}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {mouvement.projet?.nom}
+                        <div className="space-y-1 text-sm text-muted-foreground">
+                          {mouvement.type === 'ENTREE' && mouvement.fournisseur && (
+                            <div><span className="font-medium text-foreground">Fournisseur:</span> {mouvement.fournisseur.nom}</div>
+                          )}
+                          {mouvement.destination && (
+                            <div><span className="font-medium text-foreground">Destination:</span> {mouvement.destination}</div>
+                          )}
+                          {mouvement.projet?.nom && (
+                            <div><span className="font-medium text-foreground">Projet:</span> {mouvement.projet.nom}</div>
+                          )}
+                          {mouvement.demandeur?.nom && (
+                            <div><span className="font-medium text-foreground">Demandeur:</span> {mouvement.demandeur.nom}</div>
+                          )}
+                          {mouvement.type === 'SORTIE' && mouvement.prixVenteDefinitif && (
+                            <div><span className="font-medium text-foreground">Prix définitif:</span> {formatCurrency(mouvement.prixVenteDefinitif)}</div>
+                          )}
                         </div>
                       </TableCell>
-                      <TableCell>{mouvement.demandeur?.nom}</TableCell>
                     </TableRow>
                   );
                 })}
@@ -535,6 +560,7 @@ function SortieStockTab({ user, formData, onMouvementAdded }: { user: any; formD
   
   const [selectedProduit, setSelectedProduit] = React.useState('');
   const [quantite, setQuantite] = React.useState('');
+  const [prixVenteDefinitif, setPrixVenteDefinitif] = React.useState('');
   const [demandeur, setDemandeur] = React.useState('');
   const [destinationPartenaire, setDestinationPartenaire] = React.useState('');
   const [particulierNom, setParticulierNom] = React.useState('');
@@ -547,6 +573,7 @@ function SortieStockTab({ user, formData, onMouvementAdded }: { user: any; formD
   const resetForm = () => {
     setSelectedProduit('');
     setQuantite('');
+    setPrixVenteDefinitif('');
     setDemandeur('');
     setDestinationPartenaire('');
     setParticulierNom('');
@@ -584,6 +611,12 @@ function SortieStockTab({ user, formData, onMouvementAdded }: { user: any; formD
     const quantiteDemandee = parseInt(quantite, 10);
     if (Number.isNaN(quantiteDemandee) || quantiteDemandee <= 0) {
       toast({ variant: 'destructive', title: 'Quantité invalide', description: 'Veuillez saisir une quantité supérieure à zéro.' });
+      return;
+    }
+
+    const prixDefinitifValue = Number(prixVenteDefinitif);
+    if (Number.isNaN(prixDefinitifValue) || prixDefinitifValue <= 0) {
+      toast({ variant: 'destructive', title: 'Prix invalide', description: 'Veuillez saisir un prix de vente définitif supérieur à zéro.' });
       return;
     }
 
@@ -629,6 +662,7 @@ function SortieStockTab({ user, formData, onMouvementAdded }: { user: any; formD
           utilisateurId: user.id,
           demandeurId: demandeur,
           destination,
+          prixVenteDefinitif: prixDefinitifValue,
         };
 
         if (selectedSerials.length > 0) {
@@ -697,6 +731,17 @@ function SortieStockTab({ user, formData, onMouvementAdded }: { user: any; formD
           <div className="space-y-2">
             <Label htmlFor="quantity-sortie">Quantité</Label>
             <Input id="quantity-sortie" type="number" placeholder="ex: 1" value={quantite} onChange={e => setQuantite(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="prix-definitif-sortie">Prix de vente définitif</Label>
+            <Input
+              id="prix-definitif-sortie"
+              type="number"
+              step="0.01"
+              placeholder="ex: 250000"
+              value={prixVenteDefinitif}
+              onChange={(e) => setPrixVenteDefinitif(e.target.value)}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="serial-numbers-sortie">Numéros de série (Optionnel)</Label>

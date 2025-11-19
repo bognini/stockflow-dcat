@@ -16,6 +16,7 @@ export type Produit = ProduitDB & {
   modele: ModeleDB & { categorie: CategorieDB };
   emplacement: EmplacementDB | null;
   serialNumbers: string[];
+  seuilAlerte: number | null;
   images: ProduitImage[];
 };
 
@@ -29,6 +30,7 @@ export type MouvementStock = MouvementStockDB & {
   justificatifFilename: string | null,
   justificatifMime: string | null,
   justificatifData: Buffer | null,
+  prixVenteDefinitif: number | null,
 };
 
 export type Categorie = CategorieDB;
@@ -43,7 +45,9 @@ export type MailConfig = MailConfigDB;
 
 export type DashboardStats = {
   valeurStock: number;
+  valeurVentes: number;
   totalArticles: number;
+  totalArticlesVendus: number;
   entrees30j: number;
   sorties30j: number;
   mouvementsRecents: MouvementStock[];

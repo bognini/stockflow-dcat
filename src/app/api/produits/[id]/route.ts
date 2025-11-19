@@ -96,6 +96,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
           prixAchat: data.prixAchat,
           coutLogistique: data.coutLogistique,
           prixVente: data.prixVente,
+          seuilAlerte: data.seuilAlerte,
           quantite: data.quantite ?? existing.quantite,
           marqueId: data.marqueId,
           modeleId: data.modeleId,

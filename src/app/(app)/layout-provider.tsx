@@ -16,6 +16,7 @@ import {
   SidebarMenuButton,
   SidebarInset,
   SidebarFooter,
+  SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
 import React, { PropsWithChildren } from 'react';
@@ -73,8 +74,8 @@ function AppShellContent({ user, pathname, pageTitle, children }: AppShellConten
 
   return (
     <>
-      <Sidebar>
-        <SidebarHeader className="p-4">
+      <Sidebar collapsible="icon">
+        <SidebarHeader className="flex items-center justify-between gap-2 p-4">
           <Link href="/dashboard" className="flex items-center gap-3 text-sidebar-foreground">
             <Image
               src="/dcat-logo.png"
@@ -84,8 +85,11 @@ function AppShellContent({ user, pathname, pageTitle, children }: AppShellConten
               className="h-10 w-10 rounded-md object-contain shadow-sm ring-2 ring-white"
               priority
             />
-            <span className="text-lg font-headline font-bold leading-tight">StockFlow DCAT</span>
+            <span className="text-lg font-headline font-bold leading-tight group-data-[collapsible=icon]:hidden">
+              StockFlow DCAT
+            </span>
           </Link>
+          <SidebarTrigger className="hidden md:inline-flex" />
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>

@@ -5,9 +5,11 @@ This is a Next.js application for inventory management, built for DCAT.
 ## Features
 
 - Role-based authentication (Admin, Marketing, Technician).
-- Inventory dashboard with key metrics and charts.
+- Inventory dashboard with key metrics and charts (including total stock value, sales value, and rolling activity).
 - Advanced product management with detailed attributes.
 - Stock entry and exit tracking.
+- Configurable low-stock alert thresholds with email notifications when sorties reach the seuil d'alerte.
+- Definitive sale price capture on sorties so finance can reconcile actual revenue.
 - Management of clients, projects, manufacturers, and vendors.
 
 ## Tech Stack

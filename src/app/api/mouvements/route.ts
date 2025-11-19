@@ -2,6 +2,30 @@ import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 import { Buffer } from 'buffer';
 import { z } from 'zod';
+import { sendNotificationEmail } from '@/lib/mail';
+
+const toOptionalNumber = (value: unknown) => {
+  if (value === null || value === undefined || value === '') {
+    return undefined;
+  }
+
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : undefined;
+  }
+
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? undefined : parsed;
+  }
+
+  return undefined;
+};
+
+type AlertContext = {
+  produitNom: string;
+  seuil: number;
+  restant: number;
+};
 
 const mouvementSchema = z.object({
   produitId: z.string().uuid(),
@@ -13,6 +37,7 @@ const mouvementSchema = z.object({
   destination: z.string().optional(),
   projetId: z.string().uuid().optional(),
   serialNumbers: z.array(z.string()).optional(),
+  prixVenteDefinitif: z.preprocess(toOptionalNumber, z.number().positive().optional()),
   justificatif: z
     .object({
       filename: z.string(),
@@ -46,9 +71,22 @@ export async function POST(req: Request) {
     const body = await req.json();
     const data = mouvementSchema.parse(body);
 
+    if (data.type === 'SORTIE' && (data.prixVenteDefinitif === undefined || data.prixVenteDefinitif === null)) {
+      return new NextResponse(
+        JSON.stringify({ error: 'Le prix de vente définitif est requis pour les sorties de stock.' }),
+        { status: 400 }
+      );
+    }
+
+    let alertContext: AlertContext | null = null;
+
     const result = await prisma.$transaction(async (tx) => {
       const produit = await tx.produit.findUnique({
         where: { id: data.produitId },
+        include: {
+          marque: true,
+          modele: true,
+        },
       });
 
       if (!produit) {
@@ -109,6 +147,7 @@ export async function POST(req: Request) {
           justificatifFilename: data.justificatif?.filename,
           justificatifMime: data.justificatif?.mime,
           justificatifData: data.justificatif ? Buffer.from(data.justificatif.data, 'base64') : undefined,
+          prixVenteDefinitif: data.prixVenteDefinitif,
         },
         include: {
           produit: { include: { modele: true, marque: true } },
@@ -119,8 +158,35 @@ export async function POST(req: Request) {
         },
       });
 
+      if (
+        data.type === 'SORTIE' &&
+        typeof produit.seuilAlerte === 'number' &&
+        newQuantite <= produit.seuilAlerte
+      ) {
+        alertContext = {
+          produitNom: `${produit.marque?.nom ?? ''} ${produit.modele?.nom ?? produit.nom}`.trim(),
+          seuil: produit.seuilAlerte,
+          restant: newQuantite,
+        };
+      }
+
       return newMouvement;
     });
+
+    if (alertContext) {
+      const { produitNom, seuil, restant } = alertContext;
+      const config = await prisma.mailConfig.findFirst();
+      if (config?.notificationEmails?.length) {
+        await sendNotificationEmail(
+          {
+            subject: `Stock critique: ${produitNom}`,
+            text: `Le stock du produit ${produitNom} est passé à ${restant} unité(s), au seuil d'alerte (${seuil}).`,
+            html: `<p><strong>${produitNom}</strong> est passé au seuil critique.</p><p>Stock restant: ${restant} (seuil: ${seuil}).</p>`,
+          },
+          config.notificationEmails,
+        );
+      }
+    }
 
     return NextResponse.json(result, { status: 201 });
   } catch (error) {

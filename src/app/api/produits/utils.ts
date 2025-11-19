@@ -57,6 +57,7 @@ export const createProductSchema = z.object({
   prixAchat: z.preprocess(toOptionalNumber, z.number().optional()),
   coutLogistique: z.preprocess(toOptionalNumber, z.number().optional()),
   prixVente: z.preprocess(toOptionalNumber, z.number().optional()),
+  seuilAlerte: z.preprocess(toOptionalInteger, z.number().int().positive().optional()),
   quantite: z.preprocess(toOptionalInteger, z.number().int().optional()),
   serialNumbers: z.array(z.string()).optional(),
   images: z
@@ -80,6 +81,7 @@ export const updateProductSchema = z
     prixAchat: z.preprocess(toOptionalNumber, z.number().optional()),
     coutLogistique: z.preprocess(toOptionalNumber, z.number().optional()),
     prixVente: z.preprocess(toOptionalNumber, z.number().optional()),
+    seuilAlerte: z.preprocess(toOptionalInteger, z.number().int().positive().optional()),
     quantite: z.preprocess(toOptionalInteger, z.number().int().optional()),
     serialNumbers: z.array(z.string()).optional(),
     images: z

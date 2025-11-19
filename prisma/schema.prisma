@@ -49,6 +49,7 @@ model Produit {
   prixVente       Float?
   quantite        Int              @default(0)
   serialNumbers   String[]         @default([])
+  seuilAlerte     Int?
   marqueId        String
   marque          Marque           @relation(fields: [marqueId], references: [id])
   categorieId     String
@@ -110,6 +111,7 @@ model MouvementStock {
   justificatifFilename String?
   justificatifMime      String?
   justificatifData      Bytes?
+  prixVenteDefinitif    Float?
 }
 
 model Partenaire {

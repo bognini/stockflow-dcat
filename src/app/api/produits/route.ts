@@ -72,6 +72,7 @@ export async function POST(req: Request) {
           prixAchat: data.prixAchat,
           coutLogistique: data.coutLogistique,
           prixVente: data.prixVente,
+          seuilAlerte: data.seuilAlerte,
           quantite: data.quantite ?? 0,
           marqueId: data.marqueId,
           modeleId: data.modeleId,

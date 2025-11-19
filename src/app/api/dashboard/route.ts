@@ -9,6 +9,17 @@ export async function GET() {
     const valeurStock = produits.reduce((sum, p) => sum + (p.prixVente || 0) * p.quantite, 0);
     const totalArticles = produits.reduce((sum, p) => sum + p.quantite, 0);
 
+    // Total ventes cumulées
+    const ventes = await prisma.mouvementStock.aggregate({
+      where: { type: 'SORTIE' },
+      _sum: {
+        quantite: true,
+        prixVenteDefinitif: true,
+      },
+    });
+    const valeurVentes = ventes._sum.prixVenteDefinitif || 0;
+    const totalArticlesVendus = ventes._sum.quantite || 0;
+
     // Mouvements sur 30 jours
     const thirtyDaysAgo = subDays(new Date(), 30);
     const entrees30j = await prisma.mouvementStock.aggregate({
@@ -54,17 +65,22 @@ export async function GET() {
         _sum: { quantite: true },
         where: { type: 'SORTIE', date: { gte: start, lte: end } },
       });
-      
+
+      const entreesTotal = Math.round(entrees._sum.quantite || 0);
+      const sortiesTotal = Math.round(sorties._sum.quantite || 0);
+
       mouvementsParMois.push({
         month: start.toLocaleString('fr-FR', { month: 'short' }),
-        entrees: entrees._sum.quantite || 0,
-        sorties: sorties._sum.quantite || 0,
+        entrees: entreesTotal,
+        sorties: sortiesTotal,
       });
     }
 
     const stats = {
       valeurStock,
+      valeurVentes,
       totalArticles,
+      totalArticlesVendus,
       entrees30j: entrees30j._sum.quantite || 0,
       sorties30j: sorties30j._sum.quantite || 0,
       mouvementsRecents,
