@@ -607,7 +607,7 @@ function ProductDetailSheet({
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <PriceCard label="Prix d'achat" value={produit.prixAchat} />
                 <PriceCard label="Coûts logistiques" value={produit.coutLogistique} />
-                <PriceCard label="Prix de vente" value={produit.prixVente} />
+                <PriceCard label="Prix de vente minimum" value={produit.prixVente} />
               </div>
             </div>
 

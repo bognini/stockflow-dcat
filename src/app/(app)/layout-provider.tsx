@@ -76,7 +76,10 @@ function AppShellContent({ user, pathname, pageTitle, children }: AppShellConten
     <>
       <Sidebar collapsible="icon">
         <SidebarHeader className="flex items-center justify-between gap-2 p-4">
-          <Link href="/dashboard" className="flex items-center gap-3 text-sidebar-foreground">
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-3 text-sidebar-foreground group-data-[collapsible=icon]:hidden"
+          >
             <Image
               src="/dcat-logo.png"
               alt="Logo DCAT"

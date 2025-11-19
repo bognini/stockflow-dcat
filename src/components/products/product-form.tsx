@@ -190,6 +190,14 @@ export function ProductForm({ mode, initialProduct, onSuccess, onCancel, title }
     [options, selectedModeleId]
   );
 
+  const prixRevient = React.useMemo(() => {
+    const achat = parseNumber(formValues.prixAchat) ?? 0;
+    const logistique = parseNumber(formValues.coutLogistique) ?? 0;
+    const total = achat + logistique;
+    const rounded = roundUpToNearestFive(total);
+    return rounded;
+  }, [formValues.prixAchat, formValues.coutLogistique]);
+
   const parseNumber = (value: string) => {
     if (value.trim() === '') return undefined;
     const parsed = Number(value);
@@ -202,6 +210,14 @@ export function ProductForm({ mode, initialProduct, onSuccess, onCancel, title }
     if (Number.isNaN(parsed)) return undefined;
     const intValue = Math.trunc(parsed);
     return intValue >= 0 ? intValue : undefined;
+  };
+
+  const roundUpToNearestFive = (value: number | undefined) => {
+    if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
+      return null;
+    }
+
+    return Math.ceil(value / 5) * 5;
   };
 
   const handleFieldChange = (field: keyof FormValues, value: string) => {
@@ -567,7 +583,7 @@ export function ProductForm({ mode, initialProduct, onSuccess, onCancel, title }
 
       <div className="space-y-2">
         <Label>Prix</Label>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 rounded-lg border p-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-2 rounded-lg border p-4">
           <div className="space-y-2">
             <Label htmlFor="prixAchat" className="text-xs text-muted-foreground">
               Prix d'achat
@@ -599,6 +615,14 @@ export function ProductForm({ mode, initialProduct, onSuccess, onCancel, title }
               type="number"
               value={formValues.prixVente}
               onChange={(event) => handleFieldChange('prixVente', event.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Prix de revient (auto)</Label>
+            <Input
+              value={prixRevient ? String(prixRevient) : ''}
+              placeholder="Calcul automatique"
+              readOnly
             />
           </div>
         </div>

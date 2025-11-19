@@ -25,7 +25,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { ArrowDown, ArrowUp, Calendar as CalendarIcon, User, Package, MapPin, ShieldAlert, UploadCloud, ChevronsRight, Loader2, DollarSign } from 'lucide-react';
+import { ArrowDown, ArrowUp, Calendar as CalendarIcon, User, Package, MapPin, ShieldAlert, UploadCloud, ChevronsRight, Loader2, DollarSign, Download } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -149,7 +149,13 @@ const MouvementCard = ({ mouvement }: { mouvement: MouvementStock }) => {
     )
 }
 
-function HistoriqueTab({ mouvements, utilisateurs }: { mouvements: MouvementStock[], utilisateurs: Utilisateur[] }) {
+interface HistoriqueTabProps {
+  mouvements: MouvementStock[];
+  utilisateurs: Utilisateur[];
+  isLoading: boolean;
+}
+
+function HistoriqueTab({ mouvements, utilisateurs, isLoading }: HistoriqueTabProps) {
   const [date, setDate] = React.useState<DateRange | undefined>({
     from: addDays(new Date(), -30),
     to: new Date(),
@@ -164,6 +170,7 @@ function HistoriqueTab({ mouvements, utilisateurs }: { mouvements: MouvementStoc
       return dateMatch && typeMatch;
     });
   }, [mouvements, date, typeFilter]);
+  const noResults = filteredMouvements.length === 0;
 
   return (
     <Card>
@@ -223,9 +230,24 @@ function HistoriqueTab({ mouvements, utilisateurs }: { mouvements: MouvementStoc
       <CardContent>
          {/* Responsive view: list of cards for mobile */}
         <div className="md:hidden space-y-4">
-             {filteredMouvements.length > 0 ? (
+             {isLoading ? (
+                <div className="text-center py-10 text-muted-foreground">Chargement de l'historique...</div>
+             ) : filteredMouvements.length > 0 ? (
                 filteredMouvements.map((mouvement) => (
-                    <MouvementCard key={mouvement.id} mouvement={mouvement} />
+                    <div key={mouvement.id} className="space-y-3">
+                      <MouvementCard mouvement={mouvement} />
+                      {mouvement.justificatifFilename && (
+                        <Button asChild variant="outline" size="sm" className="w-full">
+                          <a
+                            href={`/api/mouvements/${mouvement.id}/justificatif`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Download className="mr-2 h-4 w-4" /> Télécharger le justificatif
+                          </a>
+                        </Button>
+                      )}
+                    </div>
                 ))
             ) : (
                 <div className="text-center py-10 text-muted-foreground">
@@ -241,79 +263,108 @@ function HistoriqueTab({ mouvements, utilisateurs }: { mouvements: MouvementStoc
               <TableHeader>
                 <TableRow>
                   <TableHead>Date</TableHead>
-                  <TableHead>Produit</TableHead>
+                  <TableHead>Nom du produit</TableHead>
+                  <TableHead>Modèle</TableHead>
                   <TableHead className="text-center">Type</TableHead>
                   <TableHead className="text-center">Quantité</TableHead>
                   <TableHead>Utilisateur</TableHead>
                   <TableHead>Détails</TableHead>
+                  <TableHead>Justificatif</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredMouvements.map((mouvement) => {
-                  return (
-                    <TableRow key={mouvement.id}>
-                      <TableCell>
-                        {format(parseISO(mouvement.date as unknown as string), 'dd/MM/yyyy')}
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {mouvement.produit.modele.nom}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Badge
-                          variant={mouvement.type === 'ENTREE' ? 'secondary' : 'outline'}
-                          className={`border-0 ${
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="h-24 text-center">
+                      Chargement de l'historique...
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredMouvements.map((mouvement) => {
+                    return (
+                      <TableRow key={mouvement.id}>
+                        <TableCell>
+                          {format(parseISO(mouvement.date as unknown as string), 'dd/MM/yyyy')}
+                        </TableCell>
+                        <TableCell className="font-semibold">
+                          {mouvement.produit.nom}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {mouvement.produit.modele.nom}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge
+                            variant={mouvement.type === 'ENTREE' ? 'secondary' : 'outline'}
+                            className={`border-0 ${
+                              mouvement.type === 'ENTREE'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : 'bg-rose-100 text-rose-800'
+                            }`}
+                          >
+                            {mouvement.type === 'ENTREE' ? (
+                              <ArrowUp className="mr-1 h-3 w-3" />
+                            ) : (
+                              <ArrowDown className="mr-1 h-3 w-3" />
+                            )}
+                            {mouvement.type === 'ENTREE' ? 'Entrée' : 'Sortie'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell
+                          className={`text-center font-semibold ${
                             mouvement.type === 'ENTREE'
-                              ? 'bg-emerald-100 text-emerald-800'
-                              : 'bg-rose-100 text-rose-800'
+                              ? 'text-emerald-600'
+                              : 'text-rose-600'
                           }`}
                         >
-                          {mouvement.type === 'ENTREE' ? (
-                            <ArrowUp className="mr-1 h-3 w-3" />
+                          {mouvement.type === 'ENTREE' ? '+' : '-'}
+                          {mouvement.quantite}
+                        </TableCell>
+                        <TableCell>{mouvement.utilisateur.nom}</TableCell>
+                        <TableCell>
+                          <div className="space-y-1 text-sm text-muted-foreground">
+                            {mouvement.type === 'ENTREE' && mouvement.fournisseur && (
+                              <div><span className="font-medium text-foreground">Fournisseur:</span> {mouvement.fournisseur.nom}</div>
+                            )}
+                            {mouvement.destination && (
+                              <div><span className="font-medium text-foreground">Destination:</span> {mouvement.destination}</div>
+                            )}
+                            {mouvement.projet?.nom && (
+                              <div><span className="font-medium text-foreground">Projet:</span> {mouvement.projet.nom}</div>
+                            )}
+                            {mouvement.demandeur?.nom && (
+                              <div><span className="font-medium text-foreground">Demandeur:</span> {mouvement.demandeur.nom}</div>
+                            )}
+                            {mouvement.type === 'SORTIE' && mouvement.prixVenteDefinitif && (
+                              <div><span className="font-medium text-foreground">Prix définitif:</span> {formatCurrency(mouvement.prixVenteDefinitif)}</div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {mouvement.justificatifFilename ? (
+                            <Button asChild variant="outline" size="sm">
+                              <a
+                                href={`/api/mouvements/${mouvement.id}/justificatif`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                <Download className="mr-2 h-4 w-4" /> Télécharger
+                              </a>
+                            </Button>
                           ) : (
-                            <ArrowDown className="mr-1 h-3 w-3" />
+                            <span className="text-muted-foreground text-sm">—</span>
                           )}
-                          {mouvement.type === 'ENTREE' ? 'Entrée' : 'Sortie'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell
-                        className={`text-center font-semibold ${
-                          mouvement.type === 'ENTREE'
-                            ? 'text-emerald-600'
-                            : 'text-rose-600'
-                        }`}
-                      >
-                        {mouvement.type === 'ENTREE' ? '+' : '-'}
-                        {mouvement.quantite}
-                      </TableCell>
-                      <TableCell>{mouvement.utilisateur.nom}</TableCell>
-                      <TableCell>
-                        <div className="space-y-1 text-sm text-muted-foreground">
-                          {mouvement.type === 'ENTREE' && mouvement.fournisseur && (
-                            <div><span className="font-medium text-foreground">Fournisseur:</span> {mouvement.fournisseur.nom}</div>
-                          )}
-                          {mouvement.destination && (
-                            <div><span className="font-medium text-foreground">Destination:</span> {mouvement.destination}</div>
-                          )}
-                          {mouvement.projet?.nom && (
-                            <div><span className="font-medium text-foreground">Projet:</span> {mouvement.projet.nom}</div>
-                          )}
-                          {mouvement.demandeur?.nom && (
-                            <div><span className="font-medium text-foreground">Demandeur:</span> {mouvement.demandeur.nom}</div>
-                          )}
-                          {mouvement.type === 'SORTIE' && mouvement.prixVenteDefinitif && (
-                            <div><span className="font-medium text-foreground">Prix définitif:</span> {formatCurrency(mouvement.prixVenteDefinitif)}</div>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-                 {filteredMouvements.length === 0 && (
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+                 {!isLoading && noResults && (
                     <TableRow>
-                        <TableCell colSpan={7} className="h-24 text-center">
+                        <TableCell colSpan={8} className="h-24 text-center">
                             Aucun mouvement trouvé pour la période ou le filtre sélectionné.
                         </TableCell>
                     </TableRow>
+                 )}
                 )}
               </TableBody>
             </Table>
@@ -951,7 +1002,7 @@ export default function MovementsPage() {
         </TabsContent>
       )}
       <TabsContent value="historique" className="mt-4">
-        <HistoriqueTab mouvements={mouvements} utilisateurs={formData.utilisateurs} />
+        <HistoriqueTab mouvements={mouvements} utilisateurs={formData.utilisateurs} isLoading={loading} />
       </TabsContent>
     </Tabs>
   );

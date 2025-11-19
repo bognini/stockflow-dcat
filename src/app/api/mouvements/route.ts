@@ -51,7 +51,16 @@ export async function GET() {
   try {
     const mouvements = await prisma.mouvementStock.findMany({
       orderBy: { date: 'desc' },
-      include: {
+      select: {
+        id: true,
+        date: true,
+        type: true,
+        quantite: true,
+        destination: true,
+        serialNumbers: true,
+        prixVenteDefinitif: true,
+        justificatifFilename: true,
+        justificatifMime: true,
         produit: { include: { modele: true, marque: true } },
         utilisateur: true,
         demandeur: true,

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
-import { Camera, Loader2 } from 'lucide-react';
+import { Camera, Loader2, CheckCircle, XCircle } from 'lucide-react';
 
 export default function ProfilPage() {
   const { user, setUser } = useAuth();
@@ -19,6 +19,10 @@ export default function ProfilPage() {
   const [email, setEmail] = useState('');
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   useEffect(() => {
     if (user) {
@@ -83,12 +87,86 @@ export default function ProfilPage() {
     }
   };
 
-  const handlePasswordUpdate = () => {
-     toast({
-      title: 'Mot de passe mis à jour',
-      description: 'Votre mot de passe a été modifié.',
-    });
+  const passwordChecks = useMemo(() => {
+    const checks = {
+      length: newPassword.length >= 8,
+      lowercase: /[a-z]/.test(newPassword),
+      uppercase: /[A-Z]/.test(newPassword),
+      number: /\d/.test(newPassword),
+      special: /[^A-Za-z0-9]/.test(newPassword),
+      match: newPassword !== '' && newPassword === confirmPassword,
+      different: currentPassword !== '' && newPassword !== '' && currentPassword !== newPassword,
+    };
+    return {
+      ...checks,
+      allMet: Object.values(checks).every(Boolean),
+    };
+  }, [currentPassword, newPassword, confirmPassword]);
+
+  const handlePasswordUpdate = async () => {
+    if (!user) return;
+
+    if (!currentPassword.trim() || !newPassword.trim() || !confirmPassword.trim()) {
+      toast({
+        variant: 'destructive',
+        title: 'Champs manquants',
+        description: 'Veuillez remplir tous les champs du mot de passe.',
+      });
+      return;
+    }
+
+    if (!passwordChecks.allMet) {
+      toast({
+        variant: 'destructive',
+        title: 'Mot de passe non conforme',
+        description: 'Respectez tous les critères et assurez-vous que les mots de passe correspondent.',
+      });
+      return;
+    }
+
+    setIsUpdatingPassword(true);
+    try {
+      const response = await fetch(`/api/users/${user.id}/password`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const errorMessage = data?.error?.message
+          || data?.error?.newPassword?.[0]
+          || data?.error?.currentPassword?.[0]
+          || data?.error
+          || 'Impossible de mettre à jour le mot de passe.';
+        throw new Error(typeof errorMessage === 'string' ? errorMessage : 'Erreur inconnue.');
+      }
+
+      toast({
+        title: 'Mot de passe mis à jour',
+        description: 'Votre mot de passe a été modifié avec succès.',
+      });
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Erreur',
+        description: error instanceof Error ? error.message : 'Une erreur est survenue.',
+      });
+    } finally {
+      setIsUpdatingPassword(false);
+    }
   };
+
+  const PasswordRequirement = ({ label, met }: { label: string; met: boolean }) => (
+    <div className={`flex items-center text-sm ${met ? 'text-emerald-600' : 'text-muted-foreground'}`}>
+      {met ? <CheckCircle className="mr-2 h-4 w-4" /> : <XCircle className="mr-2 h-4 w-4" />}
+      {label}
+    </div>
+  );
   
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
@@ -181,19 +259,46 @@ export default function ProfilPage() {
             <CardContent className="space-y-4">
                 <div className="space-y-1">
                     <Label htmlFor="current-password">Mot de passe actuel</Label>
-                    <Input id="current-password" type="password" />
+                    <Input
+                      id="current-password"
+                      type="password"
+                      value={currentPassword}
+                      onChange={(event) => setCurrentPassword(event.target.value)}
+                    />
                 </div>
                 <div className="space-y-1">
                     <Label htmlFor="new-password">Nouveau mot de passe</Label>
-                    <Input id="new-password" type="password" />
+                    <Input
+                      id="new-password"
+                      type="password"
+                      value={newPassword}
+                      onChange={(event) => setNewPassword(event.target.value)}
+                    />
                 </div>
                 <div className="space-y-1">
                     <Label htmlFor="confirm-password">Confirmer le nouveau mot de passe</Label>
-                    <Input id="confirm-password" type="password" />
+                    <Input
+                      id="confirm-password"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(event) => setConfirmPassword(event.target.value)}
+                    />
                 </div>
+                <Card className="bg-muted/40 p-4 space-y-2">
+                  <PasswordRequirement label="Au moins 8 caractères" met={passwordChecks.length} />
+                  <PasswordRequirement label="Une lettre minuscule" met={passwordChecks.lowercase} />
+                  <PasswordRequirement label="Une lettre majuscule" met={passwordChecks.uppercase} />
+                  <PasswordRequirement label="Un chiffre" met={passwordChecks.number} />
+                  <PasswordRequirement label="Un caractère spécial" met={passwordChecks.special} />
+                  <PasswordRequirement label="Les mots de passe correspondent" met={passwordChecks.match} />
+                  <PasswordRequirement label="Différent de l'ancien mot de passe" met={passwordChecks.different} />
+                </Card>
             </CardContent>
             <CardFooter className="border-t px-6 py-4">
-                <Button onClick={handlePasswordUpdate}>Changer le mot de passe</Button>
+                <Button onClick={handlePasswordUpdate} disabled={isUpdatingPassword || !passwordChecks.allMet}>
+                  {isUpdatingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Changer le mot de passe
+                </Button>
             </CardFooter>
         </Card>
     </div>
