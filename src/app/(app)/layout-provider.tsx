@@ -75,7 +75,7 @@ function AppShellContent({ user, pathname, pageTitle, children }: AppShellConten
   return (
     <>
       <Sidebar collapsible="icon">
-        <SidebarHeader className="flex items-center justify-between gap-2 p-4">
+        <SidebarHeader className="flex items-center justify-between gap-2 p-4 group-data-[collapsible=icon]:justify-center">
           <Link
             href="/dashboard"
             className="flex items-center gap-3 text-sidebar-foreground group-data-[collapsible=icon]:hidden"
@@ -92,7 +92,7 @@ function AppShellContent({ user, pathname, pageTitle, children }: AppShellConten
               StockFlow DCAT
             </span>
           </Link>
-          <SidebarTrigger className="hidden md:inline-flex" />
+          <SidebarTrigger className="hidden md:inline-flex group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:justify-center" />
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
@@ -116,7 +116,7 @@ function AppShellContent({ user, pathname, pageTitle, children }: AppShellConten
           </SidebarMenu>
         </SidebarContent>
         {user.role && (
-          <SidebarFooter className="p-4">
+          <SidebarFooter className="p-4 group-data-[collapsible=icon]:hidden">
             <div className="text-xs text-sidebar-foreground/50">
               Connecté {getRoleText(user.role)}
             </div>

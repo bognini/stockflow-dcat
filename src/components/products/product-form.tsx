@@ -30,6 +30,28 @@ type ProductFormOptions = {
   emplacements: Emplacement[];
 };
 
+const parseNumber = (value: string) => {
+  if (value.trim() === '') return undefined;
+  const parsed = Number(value);
+  return Number.isNaN(parsed) ? undefined : parsed;
+};
+
+const parseInteger = (value: string) => {
+  if (value.trim() === '') return undefined;
+  const parsed = Number(value);
+  if (Number.isNaN(parsed)) return undefined;
+  const intValue = Math.trunc(parsed);
+  return intValue >= 0 ? intValue : undefined;
+};
+
+const roundUpToNearestFive = (value: number | undefined) => {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
+    return null;
+  }
+
+  return Math.ceil(value / 5) * 5;
+};
+
 type SelectedImage = {
   id?: string;
   filename: string;
@@ -197,28 +219,6 @@ export function ProductForm({ mode, initialProduct, onSuccess, onCancel, title }
     const rounded = roundUpToNearestFive(total);
     return rounded;
   }, [formValues.prixAchat, formValues.coutLogistique]);
-
-  const parseNumber = (value: string) => {
-    if (value.trim() === '') return undefined;
-    const parsed = Number(value);
-    return Number.isNaN(parsed) ? undefined : parsed;
-  };
-
-  const parseInteger = (value: string) => {
-    if (value.trim() === '') return undefined;
-    const parsed = Number(value);
-    if (Number.isNaN(parsed)) return undefined;
-    const intValue = Math.trunc(parsed);
-    return intValue >= 0 ? intValue : undefined;
-  };
-
-  const roundUpToNearestFive = (value: number | undefined) => {
-    if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
-      return null;
-    }
-
-    return Math.ceil(value / 5) * 5;
-  };
 
   const handleFieldChange = (field: keyof FormValues, value: string) => {
     setFormValues((prev) => ({ ...prev, [field]: value }));
