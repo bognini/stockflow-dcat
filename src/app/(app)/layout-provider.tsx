@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { Boxes, FolderKanban, Home, Package, Settings, Users, Waypoints, CreditCard, Loader2 } from 'lucide-react';
+import { Boxes, FolderKanban, Home, Package, Settings, Users, Waypoints, CreditCard, Loader2, PanelLeft } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { Header } from '@/components/common/Header';
 import {
@@ -70,7 +70,7 @@ type AppShellContentProps = PropsWithChildren<{
 }>;
 
 function AppShellContent({ user, pathname, pageTitle, children }: AppShellContentProps) {
-  const { setOpenMobile } = useSidebar();
+  const { setOpenMobile, toggleSidebar } = useSidebar();
 
   return (
     <>
@@ -92,10 +92,16 @@ function AppShellContent({ user, pathname, pageTitle, children }: AppShellConten
               StockFlow DCAT
             </span>
           </Link>
-          <SidebarTrigger className="hidden md:inline-flex group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:justify-center" />
+          <SidebarTrigger className="hidden md:inline-flex group-data-[collapsible=icon]:hidden" />
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
+            <SidebarMenuItem className="hidden group-data-[collapsible=icon]:block">
+              <SidebarMenuButton onClick={() => toggleSidebar()} tooltip="Afficher le menu">
+                <PanelLeft />
+                <span className="group-data-[collapsible=icon]:hidden">Agrandir</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
             {navItems.map((item) =>
               !item.roles || (user.role && item.roles.includes(user.role)) ? (
                 <SidebarMenuItem key={item.href}>

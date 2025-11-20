@@ -607,6 +607,14 @@ export function ProductForm({ mode, initialProduct, onSuccess, onCancel, title }
             />
           </div>
           <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Prix de revient (auto)</Label>
+            <Input
+              value={prixRevient ? String(prixRevient) : ''}
+              placeholder="Calcul automatique"
+              readOnly
+            />
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="prixVente" className="text-xs text-muted-foreground">
               Prix de vente minimum
             </Label>
@@ -615,14 +623,6 @@ export function ProductForm({ mode, initialProduct, onSuccess, onCancel, title }
               type="number"
               value={formValues.prixVente}
               onChange={(event) => handleFieldChange('prixVente', event.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Prix de revient (auto)</Label>
-            <Input
-              value={prixRevient ? String(prixRevient) : ''}
-              placeholder="Calcul automatique"
-              readOnly
             />
           </div>
         </div>
