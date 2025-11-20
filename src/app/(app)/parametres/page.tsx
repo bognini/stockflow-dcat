@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { List, ListItem } from '@/components/ui/list';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/use-auth';
-import { Mail, PlusCircle, ShieldAlert, Trash2, Loader2, X } from 'lucide-react';
+import { Mail, PlusCircle, ShieldAlert, Trash2, Loader2, X, Pencil } from 'lucide-react';
 import { 
   AlertDialog, 
   AlertDialogAction, 
@@ -19,6 +19,15 @@ import {
   AlertDialogTitle, 
   AlertDialogTrigger 
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter as DialogFooterPrimitive,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Categorie, Marque, Modele, Fournisseur, Emplacement, Partenaire, Projet, Utilisateur, MailConfig } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
@@ -36,6 +45,7 @@ type ListContentProps<T extends Item> = {
   renderItem?: (item: T) => React.ReactNode;
   formContent: React.ReactNode;
   fetchData: () => Promise<void> | void;
+  renderActions?: (item: T) => React.ReactNode;
 };
 
 
@@ -89,6 +99,387 @@ function ModeleForm({ categories, marques, onAdd }: ModeleFormProps) {
         {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />} Ajouter
       </Button>
     </div>
+  );
+}
+
+type SimpleNameEditButtonProps = {
+  item: Item;
+  endpoint: Extract<ApiEndpoint, 'categories' | 'marques' | 'fournisseurs' | 'emplacements'>;
+  dialogTitle: string;
+  label: string;
+  onUpdated: () => Promise<void> | void;
+};
+
+function SimpleNameEditButton({ item, endpoint, dialogTitle, label, onUpdated }: SimpleNameEditButtonProps) {
+  const { toast } = useToast();
+  const [open, setOpen] = React.useState(false);
+  const [nom, setNom] = React.useState(item.nom);
+  const [isSaving, setIsSaving] = React.useState(false);
+
+  React.useEffect(() => {
+    if (open) {
+      setNom(item.nom);
+    }
+  }, [item.nom, open]);
+
+  const handleSave = async () => {
+    if (!nom.trim()) {
+      toast({ variant: 'destructive', title: 'Le nom est requis.' });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const response = await fetch(`/api/settings/${endpoint}/${item.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nom: nom.trim() }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Impossible de mettre à jour cet élément.');
+      }
+
+      toast({ title: 'Élément mis à jour' });
+      setOpen(false);
+      await Promise.resolve(onUpdated());
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Erreur', description: error.message });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Modifier">
+          <Pencil className="h-4 w-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{dialogTitle}</DialogTitle>
+          <DialogDescription>Modifiez les informations et enregistrez.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-2">
+          <Label>{label}</Label>
+          <Input value={nom} onChange={(e) => setNom(e.target.value)} />
+        </div>
+        <DialogFooterPrimitive>
+          <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
+          <Button onClick={handleSave} disabled={isSaving}>
+            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Enregistrer
+          </Button>
+        </DialogFooterPrimitive>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+type ModeleEditButtonProps = {
+  modele: Modele;
+  categories: Categorie[];
+  marques: Marque[];
+  onUpdated: () => Promise<void> | void;
+};
+
+function ModeleEditButton({ modele, categories, marques, onUpdated }: ModeleEditButtonProps) {
+  const { toast } = useToast();
+  const [open, setOpen] = React.useState(false);
+  const [nom, setNom] = React.useState(modele.nom);
+  const [marqueId, setMarqueId] = React.useState(modele.marque.id);
+  const [categorieId, setCategorieId] = React.useState(modele.categorie.id);
+  const [isSaving, setIsSaving] = React.useState(false);
+
+  React.useEffect(() => {
+    if (open) {
+      setNom(modele.nom);
+      setMarqueId(modele.marque.id);
+      setCategorieId(modele.categorie.id);
+    }
+  }, [modele, open]);
+
+  const handleSave = async () => {
+    if (!nom.trim() || !marqueId || !categorieId) {
+      toast({ variant: 'destructive', title: 'Tous les champs sont requis.' });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const response = await fetch(`/api/settings/modeles/${modele.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nom: nom.trim(), marqueId, categorieId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Impossible de mettre à jour ce modèle.');
+      }
+
+      toast({ title: 'Modèle mis à jour' });
+      setOpen(false);
+      await Promise.resolve(onUpdated());
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Erreur', description: error.message });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Modifier">
+          <Pencil className="h-4 w-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-lg space-y-4">
+        <DialogHeader>
+          <DialogTitle>Modifier le modèle</DialogTitle>
+          <DialogDescription>Mettez à jour le nom, la marque et la catégorie.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <Label>Nom du modèle</Label>
+            <Input value={nom} onChange={(e) => setNom(e.target.value)} />
+          </div>
+          <div className="space-y-1">
+            <Label>Marque</Label>
+            <Select value={marqueId} onValueChange={setMarqueId}>
+              <SelectTrigger><SelectValue placeholder="Choisir une marque" /></SelectTrigger>
+              <SelectContent>
+                {marques.map((marque) => (
+                  <SelectItem key={marque.id} value={marque.id}>{marque.nom}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label>Catégorie</Label>
+            <Select value={categorieId} onValueChange={setCategorieId}>
+              <SelectTrigger><SelectValue placeholder="Choisir une catégorie" /></SelectTrigger>
+              <SelectContent>
+                {categories.map((categorie) => (
+                  <SelectItem key={categorie.id} value={categorie.id}>{categorie.nom}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <DialogFooterPrimitive>
+          <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
+          <Button onClick={handleSave} disabled={isSaving}>
+            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Enregistrer
+          </Button>
+        </DialogFooterPrimitive>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+type PartenaireEditButtonProps = {
+  partenaire: Partenaire;
+  onUpdated: () => Promise<void> | void;
+};
+
+function PartenaireEditButton({ partenaire, onUpdated }: PartenaireEditButtonProps) {
+  const { toast } = useToast();
+  const [open, setOpen] = React.useState(false);
+  const [nom, setNom] = React.useState(partenaire.nom);
+  const [contactNom, setContactNom] = React.useState(partenaire.contactNom);
+  const [email, setEmail] = React.useState(partenaire.email);
+  const [telephone1, setTelephone1] = React.useState(partenaire.telephone1);
+  const [telephone2, setTelephone2] = React.useState(partenaire.telephone2 ?? '');
+  const [isSaving, setIsSaving] = React.useState(false);
+
+  const resetForm = React.useCallback(() => {
+    setNom(partenaire.nom);
+    setContactNom(partenaire.contactNom);
+    setEmail(partenaire.email);
+    setTelephone1(partenaire.telephone1);
+    setTelephone2(partenaire.telephone2 ?? '');
+  }, [partenaire]);
+
+  React.useEffect(() => {
+    if (open) {
+      resetForm();
+    }
+  }, [open, resetForm]);
+
+  const handleSave = async () => {
+    if (!nom.trim() || !contactNom.trim() || !email.trim() || !telephone1.trim()) {
+      toast({ variant: 'destructive', title: 'Veuillez remplir tous les champs obligatoires.' });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const response = await fetch(`/api/settings/partenaires/${partenaire.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nom,
+          contactNom,
+          email,
+          telephone1,
+          telephone2: telephone2.trim() ? telephone2.trim() : null,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Impossible de mettre à jour ce partenaire.');
+      }
+
+      toast({ title: 'Partenaire mis à jour' });
+      setOpen(false);
+      await Promise.resolve(onUpdated());
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Erreur', description: error.message });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Modifier">
+          <Pencil className="h-4 w-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-lg space-y-4">
+        <DialogHeader>
+          <DialogTitle>Modifier le partenaire</DialogTitle>
+          <DialogDescription>Mettez à jour les informations de ce partenaire.</DialogDescription>
+        </DialogHeader>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <Label>Nom de l'entreprise</Label>
+            <Input value={nom} onChange={(e) => setNom(e.target.value)} />
+          </div>
+          <div className="space-y-1">
+            <Label>Nom du contact</Label>
+            <Input value={contactNom} onChange={(e) => setContactNom(e.target.value)} />
+          </div>
+        </div>
+        <div className="space-y-1">
+          <Label>Adresse e-mail</Label>
+          <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <Label>Téléphone 1</Label>
+            <Input value={telephone1} onChange={(e) => setTelephone1(e.target.value)} />
+          </div>
+          <div className="space-y-1">
+            <Label>Téléphone 2 (optionnel)</Label>
+            <Input value={telephone2} onChange={(e) => setTelephone2(e.target.value)} />
+          </div>
+        </div>
+        <DialogFooterPrimitive>
+          <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
+          <Button onClick={handleSave} disabled={isSaving}>
+            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Enregistrer
+          </Button>
+        </DialogFooterPrimitive>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+type ProjetEditButtonProps = {
+  projet: Projet;
+  partenaires: Partenaire[];
+  onUpdated: () => Promise<void> | void;
+};
+
+function ProjetEditButton({ projet, partenaires, onUpdated }: ProjetEditButtonProps) {
+  const { toast } = useToast();
+  const [open, setOpen] = React.useState(false);
+  const [nom, setNom] = React.useState(projet.nom);
+  const [partenaireId, setPartenaireId] = React.useState(projet.partenaire.id);
+  const [isSaving, setIsSaving] = React.useState(false);
+
+  React.useEffect(() => {
+    if (open) {
+      setNom(projet.nom);
+      setPartenaireId(projet.partenaire.id);
+    }
+  }, [open, projet]);
+
+  const handleSave = async () => {
+    if (!nom.trim() || !partenaireId) {
+      toast({ variant: 'destructive', title: 'Tous les champs sont requis.' });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const response = await fetch(`/api/settings/projets/${projet.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nom: nom.trim(), partenaireId, description: projet.description ?? '' }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Impossible de mettre à jour ce projet.');
+      }
+
+      toast({ title: 'Projet mis à jour' });
+      setOpen(false);
+      await Promise.resolve(onUpdated());
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Erreur', description: error.message });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Modifier">
+          <Pencil className="h-4 w-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="space-y-4">
+        <DialogHeader>
+          <DialogTitle>Modifier le projet</DialogTitle>
+          <DialogDescription>Actualisez le nom et le partenaire associé.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-1">
+          <Label>Nom du projet</Label>
+          <Input value={nom} onChange={(e) => setNom(e.target.value)} />
+        </div>
+        <div className="space-y-1">
+          <Label>Partenaire</Label>
+          <Select value={partenaireId} onValueChange={setPartenaireId}>
+            <SelectTrigger><SelectValue placeholder="Choisir un partenaire" /></SelectTrigger>
+            <SelectContent>
+              {partenaires.map((p) => (
+                <SelectItem key={p.id} value={p.id}>{p.nom}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <DialogFooterPrimitive>
+          <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
+          <Button onClick={handleSave} disabled={isSaving}>
+            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Enregistrer
+          </Button>
+        </DialogFooterPrimitive>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -299,7 +690,7 @@ function UtilisateursTab({ utilisateurs, mailConfig, fetchData, handleAddItem }:
   );
 }
 
-function ListContent<T extends Item>({ title, items, endpoint, renderItem, formContent, fetchData }: ListContentProps<T>) {
+function ListContent<T extends Item>({ title, items, endpoint, renderItem, formContent, fetchData, renderActions }: ListContentProps<T>) {
   const { toast } = useToast();
 
   const handleDelete = async (itemId: string, itemName: string) => {
@@ -335,33 +726,36 @@ function ListContent<T extends Item>({ title, items, endpoint, renderItem, formC
         {formContent}
         <List>
           {items.map((item) => (
-            <ListItem key={item.id}>
+            <ListItem key={item.id} className="flex items-start gap-2">
               <div className="flex-1 min-w-0 pr-2">
                 {renderItem ? renderItem(item) : <span className="truncate">{item.nom}</span>}
               </div>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" aria-label="Supprimer">
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Êtes-vous sûr de vouloir supprimer cet élément ?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Cette action est irréversible. L'élément "{item.nom}" sera définitivement supprimé.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Annuler</AlertDialogCancel>
-                        <AlertDialogAction 
-                            onClick={() => handleDelete(item.id, item.nom)}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                            Supprimer
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              <div className="flex items-center gap-1">
+                {renderActions?.(item)}
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" aria-label="Supprimer">
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                      <AlertDialogHeader>
+                          <AlertDialogTitle>Êtes-vous sûr de vouloir supprimer cet élément ?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                              Cette action est irréversible. L'élément "{item.nom}" sera définitivement supprimé.
+                          </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                          <AlertDialogCancel>Annuler</AlertDialogCancel>
+                          <AlertDialogAction 
+                              onClick={() => handleDelete(item.id, item.nom)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                              Supprimer
+                          </AlertDialogAction>
+                      </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
             </ListItem>
           ))}
         </List>
@@ -807,6 +1201,15 @@ export default function SettingsPage() {
           endpoint="categories"
           fetchData={fetchData}
           formContent={<SimpleForm onAdd={(nom) => handleAddItem('categories', { nom }, nom)} placeholder="Nouvelle catégorie" />}
+          renderActions={(item) => (
+            <SimpleNameEditButton
+              item={item}
+              endpoint="categories"
+              dialogTitle="Modifier la catégorie"
+              label="Nom de la catégorie"
+              onUpdated={fetchData}
+            />
+          )}
         />
       </TabsContent>
       <TabsContent value="marques" className="mt-4">
@@ -816,6 +1219,15 @@ export default function SettingsPage() {
           endpoint="marques"
           fetchData={fetchData}
           formContent={<SimpleForm onAdd={(nom) => handleAddItem('marques', { nom }, nom)} placeholder="Nouvelle marque" />}
+          renderActions={(item) => (
+            <SimpleNameEditButton
+              item={item}
+              endpoint="marques"
+              dialogTitle="Modifier la marque"
+              label="Nom de la marque"
+              onUpdated={fetchData}
+            />
+          )}
         />
       </TabsContent>
        <TabsContent value="modeles" className="mt-4">
@@ -833,6 +1245,14 @@ export default function SettingsPage() {
               </div>
             </div>
           )}
+          renderActions={(item) => (
+            <ModeleEditButton
+              modele={item}
+              categories={categories}
+              marques={marques}
+              onUpdated={fetchData}
+            />
+          )}
         />
       </TabsContent>
       <TabsContent value="fournisseurs" className="mt-4">
@@ -842,6 +1262,15 @@ export default function SettingsPage() {
           endpoint="fournisseurs"
           fetchData={fetchData}
           formContent={<SimpleForm onAdd={(nom) => handleAddItem('fournisseurs', { nom }, nom)} placeholder="Nouveau fournisseur" />}
+          renderActions={(item) => (
+            <SimpleNameEditButton
+              item={item}
+              endpoint="fournisseurs"
+              dialogTitle="Modifier le fournisseur"
+              label="Nom du fournisseur"
+              onUpdated={fetchData}
+            />
+          )}
         />
       </TabsContent>
       <TabsContent value="emplacements" className="mt-4">
@@ -851,6 +1280,15 @@ export default function SettingsPage() {
           endpoint="emplacements"
           fetchData={fetchData}
           formContent={<SimpleForm onAdd={(nom) => handleAddItem('emplacements', { nom }, nom)} placeholder="Nouvel emplacement" />}
+          renderActions={(item) => (
+            <SimpleNameEditButton
+              item={item}
+              endpoint="emplacements"
+              dialogTitle="Modifier l'emplacement"
+              label="Nom de l'emplacement"
+              onUpdated={fetchData}
+            />
+          )}
         />
       </TabsContent>
       <TabsContent value="partenaires" className="mt-4">
@@ -868,6 +1306,9 @@ export default function SettingsPage() {
               </div>
             </div>
           )}
+          renderActions={(item) => (
+            <PartenaireEditButton partenaire={item} onUpdated={fetchData} />
+          )}
         />
       </TabsContent>
        <TabsContent value="projets" className="mt-4">
@@ -884,6 +1325,9 @@ export default function SettingsPage() {
                 Partenaire: {item.partenaire.nom}
               </div>
             </div>
+          )}
+          renderActions={(item) => (
+            <ProjetEditButton projet={item} partenaires={partenaires} onUpdated={fetchData} />
           )}
         />
       </TabsContent>

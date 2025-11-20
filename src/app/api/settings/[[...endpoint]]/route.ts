@@ -166,6 +166,55 @@ export async function POST(
   }
 }
 
+export async function PATCH(
+  req: Request,
+  context: { params?: { endpoint?: string[] } }
+) {
+  try {
+    const endpointSegments = context?.params?.endpoint ?? [];
+
+    if (endpointSegments.length < 2) {
+      return new NextResponse('Endpoint and ID are required', { status: 400 });
+    }
+
+    const [endpoint, id] = endpointSegments;
+
+    if (endpoint === 'mail') {
+      return new NextResponse('Endpoint not found', { status: 404 });
+    }
+
+    if (endpoint === 'utilisateurs') {
+      return new NextResponse('Updating users via this endpoint is not supported', { status: 400 });
+    }
+
+    const model = getModel(endpoint);
+    if (!model) {
+      return new NextResponse('Endpoint not found', { status: 404 });
+    }
+
+    const schema = schemas[endpoint];
+    if (!schema) {
+      return new NextResponse('Invalid endpoint', { status: 400 });
+    }
+
+    const body = await req.json();
+    const data = schema.parse(body);
+
+    const updatedItem = await model.update({
+      where: { id },
+      data,
+    });
+
+    return NextResponse.json(updatedItem, { status: 200 });
+  } catch (error) {
+    console.error(`[API_SETTINGS_PATCH_ERROR]`, error);
+    if (error instanceof z.ZodError) {
+      return new NextResponse(JSON.stringify({ error: error.errors }), { status: 400 });
+    }
+    return new NextResponse('Internal Server Error', { status: 500 });
+  }
+}
+
 export async function DELETE(
   req: Request,
   context: { params?: { endpoint?: string[] } }
