@@ -49,12 +49,16 @@ const ProductCard = ({ produit }: { produit: Produit }) => {
     return (
         <Card>
             <CardContent className="p-4 space-y-3">
-                <div className="flex justify-between items-start">
-                    <div>
-                        <div className="font-bold">{produit.modele?.nom || 'N/A'}</div>
-                        <div className="text-sm text-muted-foreground">{produit.marque?.nom || 'N/A'}</div>
+                <div className="flex justify-between items-start gap-3">
+                    <div className="space-y-1">
+                        <div className="text-xs uppercase tracking-wide text-muted-foreground">Nom du produit</div>
+                        <div className="font-semibold text-base leading-tight">{produit.nom}</div>
+                        <div className="text-sm text-muted-foreground">
+                            {produit.modele?.nom || 'Modèle non défini'}
+                            {produit.marque?.nom ? ` • ${produit.marque.nom}` : ''}
+                        </div>
                     </div>
-                     <Badge variant="outline" className="flex items-center justify-center gap-2 text-xs">
+                     <Badge variant="outline" className="flex items-center justify-center gap-2 text-xs shrink-0">
                         <span className={`h-2 w-2 rounded-full ${status.color}`} />
                         {status.text}
                     </Badge>
@@ -309,7 +313,8 @@ export default function StockStatusPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Produit</TableHead>
+                  <TableHead>Nom du produit</TableHead>
+                  <TableHead>Modèle</TableHead>
                   <TableHead>Catégorie</TableHead>
                   <TableHead>Emplacement</TableHead>
                   <TableHead className="text-center">Quantité</TableHead>
@@ -324,6 +329,7 @@ export default function StockStatusPage() {
                     const status = getStatus(produit.quantite);
                     return (
                       <TableRow key={produit.id} className="cursor-default">
+                        <TableCell className="font-semibold">{produit.nom}</TableCell>
                         <TableCell>
                           <div className="font-medium">{produit.modele?.nom || 'N/A'}</div>
                           <div className="text-sm text-muted-foreground">{produit.marque?.nom || 'N/A'}</div>

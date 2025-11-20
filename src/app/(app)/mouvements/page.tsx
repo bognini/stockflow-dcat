@@ -161,15 +161,31 @@ function HistoriqueTab({ mouvements, utilisateurs, isLoading }: HistoriqueTabPro
     to: new Date(),
   });
   const [typeFilter, setTypeFilter] = React.useState<'tous' | 'ENTREE' | 'SORTIE'>('tous');
+  const [destinationFilter, setDestinationFilter] = React.useState('toutes');
+
+  const destinations = React.useMemo(() => {
+    const unique = new Set<string>();
+    mouvements.forEach((mouvement) => {
+      const raw = mouvement.destination?.trim();
+      if (raw) {
+        unique.add(raw);
+      }
+    });
+    return Array.from(unique).sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
+  }, [mouvements]);
 
   const filteredMouvements = React.useMemo(() => {
     return mouvements.filter(mouvement => {
       const mouvementDate = parseISO(mouvement.date as unknown as string);
       const dateMatch = date?.from && date?.to ? (mouvementDate >= date.from && mouvementDate <= date.to) : true;
       const typeMatch = typeFilter === 'tous' || mouvement.type === typeFilter;
-      return dateMatch && typeMatch;
+      const destinationMatch =
+        destinationFilter === 'toutes'
+          ? true
+          : mouvement.destination?.trim() === destinationFilter;
+      return dateMatch && typeMatch && destinationMatch;
     });
-  }, [mouvements, date, typeFilter]);
+  }, [mouvements, date, typeFilter, destinationFilter]);
   const noResults = filteredMouvements.length === 0;
 
   return (
@@ -179,7 +195,7 @@ function HistoriqueTab({ mouvements, utilisateurs, isLoading }: HistoriqueTabPro
         <CardDescription>
           Suivi de toutes les entrées et sorties de stock.
         </CardDescription>
-        <div className="flex flex-col md:flex-row gap-4 pt-4">
+        <div className="flex flex-col gap-3 pt-4 md:flex-row md:flex-wrap">
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -224,6 +240,23 @@ function HistoriqueTab({ mouvements, utilisateurs, isLoading }: HistoriqueTabPro
                     <SelectItem value="ENTREE">Entrées uniquement</SelectItem>
                     <SelectItem value="SORTIE">Sorties uniquement</SelectItem>
                 </SelectContent>
+            </Select>
+            <Select
+              value={destinationFilter}
+              onValueChange={setDestinationFilter}
+              disabled={destinations.length === 0}
+            >
+              <SelectTrigger className="w-full md:w-[220px]">
+                <SelectValue placeholder="Filtrer par destination" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="toutes">Toutes les destinations</SelectItem>
+                {destinations.map((destination) => (
+                  <SelectItem key={destination} value={destination}>
+                    {destination}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
         </div>
       </CardHeader>
@@ -976,14 +1009,28 @@ export default function MovementsPage() {
 
   return (
     <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)} className="w-full">
-      <ScrollArea className="w-full whitespace-nowrap">
-        <TabsList className={canCreateMovements ? "grid w-full grid-cols-3 md:inline-flex md:w-auto" : "grid w-full grid-cols-1 md:inline-flex md:w-auto"}>
-          {canCreateMovements && <TabsTrigger value="entree">Entrée de stock</TabsTrigger>}
-          {canCreateMovements && <TabsTrigger value="sortie">Sortie de stock</TabsTrigger>}
-          <TabsTrigger value="historique">Historique</TabsTrigger>
+      <div className="w-full">
+        <TabsList
+          className={cn(
+            "flex h-auto w-full flex-col gap-2 rounded-xl bg-muted/60 p-2 text-muted-foreground sm:flex-row sm:flex-wrap",
+            canCreateMovements ? 'sm:justify-start' : 'sm:max-w-sm'
+          )}
+        >
+          {canCreateMovements && (
+            <TabsTrigger className="w-full sm:w-auto" value="entree">
+              Entrée de stock
+            </TabsTrigger>
+          )}
+          {canCreateMovements && (
+            <TabsTrigger className="w-full sm:w-auto" value="sortie">
+              Sortie de stock
+            </TabsTrigger>
+          )}
+          <TabsTrigger className="w-full sm:w-auto" value="historique">
+            Historique
+          </TabsTrigger>
         </TabsList>
-        <ScrollBar orientation="horizontal" />
-      </ScrollArea>
+      </div>
       {canCreateMovements && (
         <TabsContent value="entree" className="mt-4">
           <EntreeStockTab user={user} formData={formData} onMouvementAdded={() => {

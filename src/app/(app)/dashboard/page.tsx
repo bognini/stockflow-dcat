@@ -143,7 +143,32 @@ export default function DashboardPage() {
             <CardDescription>Les derniers mouvements de stock enregistrés.</CardDescription>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-[300px]">
+            <div className="md:hidden space-y-3">
+              {stats.mouvementsRecents.map((mouvement) => (
+                <div key={mouvement.id} className="rounded-lg border p-3 space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-semibold text-foreground">{mouvement.produit.nom}</span>
+                    <Badge
+                      variant={mouvement.type === 'ENTREE' ? 'default' : 'secondary'}
+                      className={mouvement.type === 'ENTREE' ? 'bg-green-500/20 text-green-700 border-green-500/30' : 'bg-red-500/20 text-red-700 border-red-500/30'}
+                    >
+                      {mouvement.type}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between text-sm text-muted-foreground">
+                    <span>Modèle</span>
+                    <span className="text-foreground">{mouvement.produit.modele.nom}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm text-muted-foreground">
+                    <span>Quantité</span>
+                    <span className={`font-semibold ${mouvement.type === 'ENTREE' ? 'text-green-600' : 'text-red-600'}`}>
+                      {mouvement.type === 'ENTREE' ? '+' : '-'}{mouvement.quantite}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <ScrollArea className="hidden md:block h-[300px]">
               <Table>
                 <TableHeader>
                   <TableRow>
