@@ -41,11 +41,16 @@ export async function sendNotificationEmail(payload: MailPayload, recipients?: s
     },
   });
 
+  const automaticNotice = '« Ceci est une notification automatique, merci de ne pas y répondre - StockFlow DCAT. »';
+  const htmlBody = payload.html ?? `<p>${payload.text}</p>`;
+  const htmlWithNotice = `${htmlBody}<p><em>${automaticNotice}</em></p>`;
+  const textWithNotice = `${payload.text.trimEnd()}\n\n${automaticNotice}`;
+
   await transporter.sendMail({
     from: config.smtpUser,
     to: destination.join(','),
     subject: payload.subject,
-    text: payload.text,
-    html: payload.html ?? `<p>${payload.text}</p>`,
+    text: textWithNotice,
+    html: htmlWithNotice,
   });
 }

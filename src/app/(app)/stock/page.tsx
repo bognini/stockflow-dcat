@@ -243,16 +243,16 @@ export default function StockStatusPage() {
     <Card>
       <CardHeader>
         <CardTitle className="font-headline">État Actuel du Stock</CardTitle>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
           <CardDescription>Consultez, recherchez et filtrez les produits de votre inventaire.</CardDescription>
           {user?.role === 'admin' && (
-            <Button variant="destructive" onClick={() => setResetDialogOpen(true)}>
+            <Button variant="destructive" className="w-full sm:w-auto" onClick={() => setResetDialogOpen(true)}>
               Réinitialiser l'historique
             </Button>
           )}
         </div>
-        <div className="mt-4 flex flex-col md:flex-row items-center gap-4">
-          <div className="relative w-full md:flex-1">
+        <div className="mt-4 flex flex-col lg:flex-row items-stretch lg:items-center gap-4">
+          <div className="relative w-full lg:flex-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
@@ -262,7 +262,7 @@ export default function StockStatusPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full md:w-auto md:flex-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full lg:w-auto lg:flex-1">
              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                 <SelectTrigger>
                     <SelectValue placeholder="Filtrer par catégorie" />
@@ -309,8 +309,8 @@ export default function StockStatusPage() {
       
         {/* Default view: table for larger screens */}
         <div className="hidden md:block">
-          <ScrollArea className="w-full whitespace-nowrap">
-            <Table>
+          <ScrollArea className="w-full">
+            <Table className="min-w-[960px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>Nom du produit</TableHead>

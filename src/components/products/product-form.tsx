@@ -583,7 +583,7 @@ export function ProductForm({ mode, initialProduct, onSuccess, onCancel, title }
 
       <div className="space-y-2">
         <Label>Prix</Label>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-2 rounded-lg border p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 rounded-lg border p-4">
           <div className="space-y-2">
             <Label htmlFor="prixAchat" className="text-xs text-muted-foreground">
               Prix d'achat
@@ -737,7 +737,7 @@ export function ProductForm({ mode, initialProduct, onSuccess, onCancel, title }
         </CardHeader>
       )}
       <CardContent>
-        <form onSubmit={handleSubmit} className="grid gap-6">
+        <form onSubmit={handleSubmit} className="grid gap-6 max-w-4xl mx-auto">
           {formContent}
         </form>
       </CardContent>

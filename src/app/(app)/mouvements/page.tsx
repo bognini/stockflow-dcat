@@ -578,7 +578,7 @@ function EntreeStockTab({ user, formData, onMouvementAdded }: { user: any; formD
             <SelectContent>
               {formData.produits.map((p) => (
                 <SelectItem key={p.id} value={p.id}>
-                  {p.marque.nom} {p.modele.nom}
+                  {p.nom} • {p.marque.nom} {p.modele.nom}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -804,7 +804,7 @@ function SortieStockTab({ user, formData, onMouvementAdded }: { user: any; formD
             <SelectContent>
               {formData.produits.map((p) => (
                 <SelectItem key={p.id} value={p.id} disabled={p.quantite === 0}>
-                  {p.marque.nom} {p.modele.nom} (En stock: {p.quantite})
+                  {p.nom} • {p.modele.nom} (Stock: {p.quantite})
                 </SelectItem>
               ))}
             </SelectContent>
