@@ -318,7 +318,7 @@ export default function StockStatusPage() {
                   <TableHead>Catégorie</TableHead>
                   <TableHead>Emplacement</TableHead>
                   <TableHead className="text-center">Quantité</TableHead>
-                  <TableHead className="w-[200px]">Niveau de stock</TableHead>
+                  <TableHead className="w-[160px] text-center">Niveau de stock</TableHead>
                   <TableHead className="text-center">État</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -339,8 +339,10 @@ export default function StockStatusPage() {
                         </TableCell>
                         <TableCell>{produit.emplacement?.nom || 'N/A'}</TableCell>
                         <TableCell className="text-center font-bold">{produit.quantite}</TableCell>
-                        <TableCell>
-                           <Progress value={status.progress} aria-label={`${status.progress}% en stock`} />
+                        <TableCell className="text-center">
+                           <div className="mx-auto max-w-[160px]">
+                             <Progress value={status.progress} aria-label={`${status.progress}% en stock`} />
+                           </div>
                         </TableCell>
                         <TableCell className="text-center">
                           <Badge variant="outline" className="flex items-center justify-center gap-2">
@@ -639,6 +641,7 @@ function ProductDetailSheet({
             <ProductForm
               mode="edit"
               initialProduct={produit}
+              compactPriceLabel
               onSuccess={(updated) => {
                 onUpdated(updated);
                 setIsEditing(false);

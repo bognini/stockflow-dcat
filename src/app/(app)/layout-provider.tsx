@@ -97,9 +97,8 @@ function AppShellContent({ user, pathname, pageTitle, children }: AppShellConten
         <SidebarContent>
           <SidebarMenu>
             <SidebarMenuItem className="hidden group-data-[collapsible=icon]:block">
-              <SidebarMenuButton onClick={() => toggleSidebar()} tooltip="Afficher le menu">
+              <SidebarMenuButton onClick={() => toggleSidebar()} aria-label="Afficher le menu">
                 <PanelLeft />
-                <span className="group-data-[collapsible=icon]:hidden">Agrandir</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             {navItems.map((item) =>

@@ -68,6 +68,7 @@ type ProductFormProps = {
   onSuccess?: (produit: Produit) => void;
   onCancel?: () => void;
   title?: string;
+  compactPriceLabel?: boolean;
 };
 
 type FormValues = {
@@ -156,7 +157,7 @@ function revokeObjectUrls(images: SelectedImage[]) {
   });
 }
 
-export function ProductForm({ mode, initialProduct, onSuccess, onCancel, title }: ProductFormProps) {
+export function ProductForm({ mode, initialProduct, onSuccess, onCancel, title, compactPriceLabel = false }: ProductFormProps) {
   const { toast } = useToast();
   const [options, setOptions] = React.useState<ProductFormOptions | null>(null);
   const [loadingOptions, setLoadingOptions] = React.useState(true);
@@ -219,6 +220,8 @@ export function ProductForm({ mode, initialProduct, onSuccess, onCancel, title }
     const rounded = roundUpToNearestFive(total);
     return rounded;
   }, [formValues.prixAchat, formValues.coutLogistique]);
+
+  const prixVenteLabel = compactPriceLabel ? 'Prix de vente min.' : 'Prix de vente minimum';
 
   const handleFieldChange = (field: keyof FormValues, value: string) => {
     setFormValues((prev) => ({ ...prev, [field]: value }));
@@ -616,7 +619,7 @@ export function ProductForm({ mode, initialProduct, onSuccess, onCancel, title }
           </div>
           <div className="space-y-2">
             <Label htmlFor="prixVente" className="text-xs text-muted-foreground">
-              Prix de vente minimum
+              {prixVenteLabel}
             </Label>
             <Input
               id="prixVente"
@@ -737,7 +740,7 @@ export function ProductForm({ mode, initialProduct, onSuccess, onCancel, title }
         </CardHeader>
       )}
       <CardContent>
-        <form onSubmit={handleSubmit} className="grid gap-6 max-w-4xl mx-auto">
+        <form onSubmit={handleSubmit} className="grid gap-6">
           {formContent}
         </form>
       </CardContent>
