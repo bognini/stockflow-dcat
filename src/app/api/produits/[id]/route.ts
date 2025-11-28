@@ -103,6 +103,13 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
           categorieId: data.categorieId,
           serialNumbers: data.serialNumbers ?? existing.serialNumbers,
           emplacementId: data.emplacementId,
+          // Storefront fields
+          isPublished: data.isPublished,
+          isFeatured: data.isFeatured,
+          seoSlug: data.seoSlug || null,
+          promoPrice: data.promoPrice,
+          promoStart: data.promoStart ? new Date(data.promoStart) : null,
+          promoEnd: data.promoEnd ? new Date(data.promoEnd) : null,
         },
       });
 

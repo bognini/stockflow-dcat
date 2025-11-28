@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import {
   ACCEPTED_PHOTO_ACCEPT,
@@ -83,6 +84,13 @@ type FormValues = {
   prixVente: string;
   seuilAlerte: string;
   emplacementId: string;
+  // Storefront fields
+  isPublished: boolean;
+  isFeatured: boolean;
+  seoSlug: string;
+  promoPrice: string;
+  promoStart: string;
+  promoEnd: string;
 };
 
 const emptyFormValues: FormValues = {
@@ -97,6 +105,13 @@ const emptyFormValues: FormValues = {
   prixVente: '',
   seuilAlerte: '',
   emplacementId: '',
+  // Storefront fields
+  isPublished: false,
+  isFeatured: false,
+  seoSlug: '',
+  promoPrice: '',
+  promoStart: '',
+  promoEnd: '',
 };
 
 async function fileToBase64(file: File): Promise<string> {
@@ -116,6 +131,12 @@ async function fileToBase64(file: File): Promise<string> {
   });
 }
 
+function formatDateForInput(date: Date | string | null | undefined): string {
+  if (!date) return '';
+  const d = typeof date === 'string' ? new Date(date) : date;
+  return d.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:mm
+}
+
 function buildFormValues(product?: Produit | null): FormValues {
   if (!product) return emptyFormValues;
   return {
@@ -130,6 +151,13 @@ function buildFormValues(product?: Produit | null): FormValues {
     prixVente: product.prixVente ? String(product.prixVente) : '',
     seuilAlerte: product.seuilAlerte ? String(product.seuilAlerte) : '',
     emplacementId: product.emplacementId ?? '',
+    // Storefront fields
+    isPublished: product.isPublished ?? false,
+    isFeatured: product.isFeatured ?? false,
+    seoSlug: product.seoSlug ?? '',
+    promoPrice: product.promoPrice ? String(product.promoPrice) : '',
+    promoStart: formatDateForInput(product.promoStart),
+    promoEnd: formatDateForInput(product.promoEnd),
   };
 }
 
@@ -420,6 +448,13 @@ export function ProductForm({ mode, initialProduct, onSuccess, onCancel, title, 
         emplacementId: formValues.emplacementId || undefined,
         images: imagesPayload,
         serialNumbers: mode === 'edit' ? initialProduct?.serialNumbers ?? [] : undefined,
+        // Storefront fields
+        isPublished: formValues.isPublished,
+        isFeatured: formValues.isFeatured,
+        seoSlug: formValues.seoSlug.trim() || undefined,
+        promoPrice: parseNumber(formValues.promoPrice) || null,
+        promoStart: formValues.promoStart ? new Date(formValues.promoStart).toISOString() : null,
+        promoEnd: formValues.promoEnd ? new Date(formValues.promoEnd).toISOString() : null,
       };
 
       const endpoint = mode === 'edit' && initialProduct ? `/api/produits/${initialProduct.id}` : '/api/produits';
@@ -716,6 +751,107 @@ export function ProductForm({ mode, initialProduct, onSuccess, onCancel, title, 
             ))}
           </div>
         )}
+      </div>
+
+      {/* E-Market / Storefront Section */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Label className="text-base font-semibold">DCAT E-Market</Label>
+          <span className="text-xs text-muted-foreground">(Boutique en ligne)</span>
+        </div>
+        <div className="rounded-lg border p-4 space-y-4">
+          {/* Publish & Feature toggles */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div className="space-y-0.5">
+                <Label htmlFor="isPublished" className="text-sm font-medium">
+                  Publier sur E-Market
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Rendre ce produit visible sur la boutique
+                </p>
+              </div>
+              <Switch
+                id="isPublished"
+                checked={formValues.isPublished}
+                onCheckedChange={(checked) => setFormValues((prev) => ({ ...prev, isPublished: checked }))}
+              />
+            </div>
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div className="space-y-0.5">
+                <Label htmlFor="isFeatured" className="text-sm font-medium">
+                  Produit en vedette
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Afficher sur la page d&apos;accueil
+                </p>
+              </div>
+              <Switch
+                id="isFeatured"
+                checked={formValues.isFeatured}
+                onCheckedChange={(checked) => setFormValues((prev) => ({ ...prev, isFeatured: checked }))}
+              />
+            </div>
+          </div>
+
+          {/* SEO Slug */}
+          <div className="space-y-2">
+            <Label htmlFor="seoSlug">URL personnalisée (slug)</Label>
+            <Input
+              id="seoSlug"
+              value={formValues.seoSlug}
+              onChange={(event) => handleFieldChange('seoSlug', event.target.value)}
+              placeholder="ex: iphone-15-pro-max-256go"
+            />
+            <p className="text-xs text-muted-foreground">
+              Laissez vide pour utiliser l&apos;ID du produit
+            </p>
+          </div>
+
+          {/* Promo Section */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Promotion</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="promoPrice" className="text-xs text-muted-foreground">
+                  Prix promo (FCFA)
+                </Label>
+                <Input
+                  id="promoPrice"
+                  type="number"
+                  value={formValues.promoPrice}
+                  onChange={(event) => handleFieldChange('promoPrice', event.target.value)}
+                  placeholder="ex: 450000"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="promoStart" className="text-xs text-muted-foreground">
+                  Début promo
+                </Label>
+                <Input
+                  id="promoStart"
+                  type="datetime-local"
+                  value={formValues.promoStart}
+                  onChange={(event) => handleFieldChange('promoStart', event.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="promoEnd" className="text-xs text-muted-foreground">
+                  Fin promo
+                </Label>
+                <Input
+                  id="promoEnd"
+                  type="datetime-local"
+                  value={formValues.promoEnd}
+                  onChange={(event) => handleFieldChange('promoEnd', event.target.value)}
+                />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Laissez les dates vides pour une promo permanente
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="flex justify-end gap-2">

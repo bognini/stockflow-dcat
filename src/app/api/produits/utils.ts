@@ -64,6 +64,13 @@ export const createProductSchema = z.object({
     .array(createImageSchema)
     .min(1, 'Au moins une image est requise')
     .max(6, 'Maximum 6 images autorisées'),
+  // Storefront fields
+  isPublished: z.boolean().optional(),
+  isFeatured: z.boolean().optional(),
+  seoSlug: z.string().optional(),
+  promoPrice: z.preprocess(toOptionalNumber, z.number().positive().optional()),
+  promoStart: z.string().datetime().optional().nullable(),
+  promoEnd: z.string().datetime().optional().nullable(),
 });
 
 export const updateProductSchema = z
@@ -88,6 +95,13 @@ export const updateProductSchema = z
       .array(updateImageSchema)
       .min(1, 'Au moins une image est requise')
       .max(6, 'Maximum 6 images autorisées'),
+    // Storefront fields
+    isPublished: z.boolean().optional(),
+    isFeatured: z.boolean().optional(),
+    seoSlug: z.string().optional(),
+    promoPrice: z.preprocess(toOptionalNumber, z.number().positive().optional().nullable()),
+    promoStart: z.string().datetime().optional().nullable(),
+    promoEnd: z.string().datetime().optional().nullable(),
   })
   .superRefine((value, ctx) => {
     value.images.forEach((image, index) => {
