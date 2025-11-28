@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useCart } from '@/contexts/CartContext';
@@ -23,7 +23,7 @@ type FormData = {
   message: string;
 };
 
-export default function DevisPage() {
+function DevisContent() {
   const searchParams = useSearchParams();
   const paymentMethod = searchParams.get('payment') || '';
   const { items, subtotal, itemCount, clearCart } = useCart();
@@ -292,5 +292,17 @@ export default function DevisPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function DevisPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto px-4 py-16 text-center">
+        <div className="animate-pulse">Chargement...</div>
+      </div>
+    }>
+      <DevisContent />
+    </Suspense>
   );
 }
