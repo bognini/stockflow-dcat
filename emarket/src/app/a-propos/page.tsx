@@ -1,4 +1,4 @@
-import { Building2, Users, Award, Globe } from 'lucide-react';
+import { Building2, Users, Award, Tv, Monitor, Home, Sun } from 'lucide-react';
 
 export const metadata = {
   title: 'À propos - DCAT E-Market',
@@ -81,28 +81,28 @@ export default function AProposPage() {
         <h2 className="text-2xl font-bold text-gray-900 mb-6">Nos Domaines d&apos;Expertise</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="flex items-start gap-4">
-            <Globe className="h-6 w-6 text-blue-600 flex-shrink-0 mt-1" />
+            <Tv className="h-6 w-6 text-blue-600 flex-shrink-0 mt-1" />
             <div>
               <h3 className="font-semibold text-gray-900">Audiovisuel</h3>
               <p className="text-gray-600 text-sm">TV numérique terrestre, antennes, diffusion, radios FM</p>
             </div>
           </div>
           <div className="flex items-start gap-4">
-            <Globe className="h-6 w-6 text-green-600 flex-shrink-0 mt-1" />
+            <Monitor className="h-6 w-6 text-green-600 flex-shrink-0 mt-1" />
             <div>
               <h3 className="font-semibold text-gray-900">Informatique</h3>
               <p className="text-gray-600 text-sm">Réseaux, solutions connectées, multimédia</p>
             </div>
           </div>
           <div className="flex items-start gap-4">
-            <Globe className="h-6 w-6 text-purple-600 flex-shrink-0 mt-1" />
+            <Home className="h-6 w-6 text-purple-600 flex-shrink-0 mt-1" />
             <div>
               <h3 className="font-semibold text-gray-900">Domotique</h3>
               <p className="text-gray-600 text-sm">Maisons intelligentes, automatisation</p>
             </div>
           </div>
           <div className="flex items-start gap-4">
-            <Globe className="h-6 w-6 text-orange-600 flex-shrink-0 mt-1" />
+            <Sun className="h-6 w-6 text-orange-600 flex-shrink-0 mt-1" />
             <div>
               <h3 className="font-semibold text-gray-900">Solaire</h3>
               <p className="text-gray-600 text-sm">Solutions énergétiques durables</p>

@@ -1,10 +1,19 @@
 'use client';
 
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useCart } from '@/contexts/CartContext';
 import { formatPrice } from '@/lib/types';
-import { ArrowLeft, Send, CheckCircle, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, Send, CheckCircle, ShoppingBag, Smartphone, CreditCard, Building2 } from 'lucide-react';
+
+const paymentLabels: Record<string, { name: string; icon: typeof Smartphone; color: string }> = {
+  orange: { name: 'Orange Money', icon: Smartphone, color: 'text-orange-500' },
+  mtn: { name: 'MTN MoMo', icon: Smartphone, color: 'text-yellow-500' },
+  wave: { name: 'Wave', icon: Smartphone, color: 'text-blue-400' },
+  card: { name: 'Carte bancaire', icon: CreditCard, color: 'text-gray-600' },
+  virement: { name: 'Virement bancaire', icon: Building2, color: 'text-green-600' },
+};
 
 type FormData = {
   nom: string;
@@ -15,6 +24,8 @@ type FormData = {
 };
 
 export default function DevisPage() {
+  const searchParams = useSearchParams();
+  const paymentMethod = searchParams.get('payment') || '';
   const { items, subtotal, itemCount, clearCart } = useCart();
   const [formData, setFormData] = useState<FormData>({
     nom: '',
@@ -53,6 +64,7 @@ export default function DevisPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
+          paymentMethod: paymentMethod || 'non spécifié',
           items: items.map((item) => ({
             id: item.id,
             name: item.name,
@@ -262,6 +274,20 @@ export default function DevisPage() {
                 Hors frais de livraison
               </p>
             </div>
+
+            {/* Payment method display */}
+            {paymentMethod && paymentLabels[paymentMethod] && (
+              <div className="border-t mt-4 pt-4">
+                <h3 className="text-sm font-semibold text-gray-700 mb-2">Mode de paiement</h3>
+                <div className="flex items-center gap-2">
+                  {(() => {
+                    const PaymentIcon = paymentLabels[paymentMethod].icon;
+                    return <PaymentIcon className={`h-5 w-5 ${paymentLabels[paymentMethod].color}`} />;
+                  })()}
+                  <span className="font-medium">{paymentLabels[paymentMethod].name}</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

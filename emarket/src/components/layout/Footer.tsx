@@ -75,15 +75,27 @@ export default function Footer() {
             <ul className="space-y-3 text-sm">
               <li className="flex items-start gap-3">
                 <MapPin className="h-5 w-5 flex-shrink-0 mt-0.5" />
-                <span>Abidjan, Côte d&apos;Ivoire</span>
+                <a 
+                  href="https://google.com/maps/place/DCAT+(Data+Communications+%26+All+Technologies)/data=!4m2!3m1!1s0x0:0x8ac01db5ac44fb4b"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-white transition-colors"
+                >
+                  Angré Château, Immeuble BATIM,<br />
+                  1er étage, Porte A108
+                </a>
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="h-5 w-5 flex-shrink-0" />
-                <span>+225 XX XX XX XX XX</span>
+                <a href="tel:+22527213733 63" className="hover:text-white transition-colors">
+                  +225 27 21 37 33 63
+                </a>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="h-5 w-5 flex-shrink-0" />
-                <span>info@dcat.ci</span>
+                <a href="mailto:info@dcat.ci" className="hover:text-white transition-colors">
+                  info@dcat.ci
+                </a>
               </li>
             </ul>
           </div>

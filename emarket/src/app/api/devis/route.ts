@@ -14,8 +14,17 @@ type QuoteRequest = {
   telephone: string;
   entreprise?: string;
   message?: string;
+  paymentMethod?: string;
   items: QuoteItem[];
   subtotal: number;
+};
+
+const paymentMethodLabels: Record<string, string> = {
+  orange: 'Orange Money',
+  mtn: 'MTN MoMo',
+  wave: 'Wave',
+  card: 'Carte bancaire',
+  virement: 'Virement bancaire',
 };
 
 export async function POST(request: Request) {
@@ -45,6 +54,10 @@ export async function POST(request: Request) {
       .map((item) => `- ${item.name} × ${item.quantity} = ${item.price * item.quantity} FCFA`)
       .join('\n');
 
+    const paymentLabel = body.paymentMethod 
+      ? paymentMethodLabels[body.paymentMethod] || body.paymentMethod 
+      : 'Non spécifié';
+
     const quoteDetails = `
 NOUVELLE DEMANDE DE DEVIS - DCAT E-Market
 ==========================================
@@ -53,6 +66,7 @@ Client: ${body.nom}
 Téléphone: ${body.telephone}
 Email: ${body.email || 'Non renseigné'}
 Entreprise: ${body.entreprise || 'Non renseignée'}
+Mode de paiement: ${paymentLabel}
 
 Message:
 ${body.message || 'Aucun message'}

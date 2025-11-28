@@ -73,7 +73,9 @@ export default function ContactPage() {
               <Phone className="h-6 w-6 text-green-600 flex-shrink-0" />
               <div>
                 <h3 className="font-semibold text-gray-900">Téléphone</h3>
-                <p className="text-gray-600">+225 XX XX XX XX XX</p>
+                <a href="tel:+2252721373363" className="text-gray-600 hover:text-blue-600">
+                  +225 27 21 37 33 63
+                </a>
               </div>
             </div>
           </div>
@@ -83,7 +85,19 @@ export default function ContactPage() {
               <MapPin className="h-6 w-6 text-red-600 flex-shrink-0" />
               <div>
                 <h3 className="font-semibold text-gray-900">Adresse</h3>
-                <p className="text-gray-600">Abidjan, Côte d&apos;Ivoire</p>
+                <p className="text-gray-600">
+                  Angré Château, Immeuble BATIM,<br />
+                  1er étage, Porte A108<br />
+                  Abidjan, Côte d&apos;Ivoire
+                </p>
+                <a 
+                  href="https://google.com/maps/place/DCAT+(Data+Communications+%26+All+Technologies)/data=!4m2!3m1!1s0x0:0x8ac01db5ac44fb4b"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline text-sm mt-2 inline-block"
+                >
+                  Voir sur Google Maps
+                </a>
               </div>
             </div>
           </div>

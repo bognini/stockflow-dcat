@@ -3,10 +3,20 @@
 import Link from 'next/link';
 import { useCart } from '@/contexts/CartContext';
 import { formatPrice } from '@/lib/types';
-import { Minus, Plus, Trash2, ShoppingBag, ArrowRight } from 'lucide-react';
+import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, Smartphone, CreditCard, Building2 } from 'lucide-react';
+import { useState } from 'react';
+
+const paymentMethods = [
+  { id: 'orange', name: 'Orange Money', icon: Smartphone, color: 'text-orange-500' },
+  { id: 'mtn', name: 'MTN MoMo', icon: Smartphone, color: 'text-yellow-500' },
+  { id: 'wave', name: 'Wave', icon: Smartphone, color: 'text-blue-400' },
+  { id: 'card', name: 'Carte bancaire', icon: CreditCard, color: 'text-gray-600' },
+  { id: 'virement', name: 'Virement bancaire', icon: Building2, color: 'text-green-600' },
+];
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, clearCart, subtotal, itemCount } = useCart();
+  const [selectedPayment, setSelectedPayment] = useState<string>('');
 
   if (items.length === 0) {
     return (
@@ -169,9 +179,53 @@ export default function CartPage() {
               </p>
             </div>
 
+            {/* Payment method selection */}
+            <div className="border-t mt-4 pt-4">
+              <h3 className="font-semibold text-gray-900 mb-3">Mode de paiement</h3>
+              <div className="space-y-2">
+                {paymentMethods.map((method) => {
+                  const Icon = method.icon;
+                  return (
+                    <label
+                      key={method.id}
+                      className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
+                        selectedPayment === method.id
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="payment"
+                        value={method.id}
+                        checked={selectedPayment === method.id}
+                        onChange={(e) => setSelectedPayment(e.target.value)}
+                        className="sr-only"
+                      />
+                      <Icon className={`h-5 w-5 ${method.color}`} />
+                      <span className="text-sm font-medium">{method.name}</span>
+                      {selectedPayment === method.id && (
+                        <span className="ml-auto text-blue-600">✓</span>
+                      )}
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
             <Link
-              href="/devis"
-              className="mt-6 w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+              href={`/devis${selectedPayment ? `?payment=${selectedPayment}` : ''}`}
+              className={`mt-6 w-full py-3 px-6 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 ${
+                selectedPayment
+                  ? 'bg-blue-600 text-white hover:bg-blue-700'
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              }`}
+              onClick={(e) => {
+                if (!selectedPayment) {
+                  e.preventDefault();
+                  alert('Veuillez sélectionner un mode de paiement');
+                }
+              }}
             >
               Demander un devis
               <ArrowRight className="h-5 w-5" />
