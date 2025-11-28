@@ -50,11 +50,29 @@ async function getActivePromos() {
   });
 }
 
+async function getLowStockProducts() {
+  // Get published products with low or zero stock
+  const products = await prisma.produit.findMany({
+    where: {
+      isPublished: true,
+      quantite: { lte: 5 }, // Low stock threshold
+    },
+    include: {
+      marque: true,
+      modele: true,
+    },
+    orderBy: { quantite: 'asc' },
+    take: 10,
+  });
+  return products;
+}
+
 export default async function AdminPage() {
-  const [stats, products, activePromos] = await Promise.all([
+  const [stats, products, activePromos, lowStockProducts] = await Promise.all([
     getProductStats(),
     getProducts(),
     getActivePromos(),
+    getLowStockProducts(),
   ]);
 
   return (
@@ -235,6 +253,44 @@ export default async function AdminPage() {
                             Expire: {new Date(product.promoEnd).toLocaleDateString('fr-FR')}
                           </p>
                         )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            {/* Low Stock Alerts */}
+            <div className="bg-white rounded-lg shadow mt-6">
+              <div className="px-4 py-3 border-b">
+                <h2 className="font-semibold flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-orange-500" />
+                  Stock faible
+                </h2>
+              </div>
+              <div className="divide-y">
+                {lowStockProducts.length === 0 ? (
+                  <div className="p-4 text-center text-gray-500">
+                    Aucun produit en stock faible
+                  </div>
+                ) : (
+                  lowStockProducts.map((product) => {
+                    const productName = `${product.marque.nom} ${product.modele.nom}`;
+                    const isOutOfStock = product.quantite <= 0;
+
+                    return (
+                      <div key={product.id} className="p-4">
+                        <p className="font-medium text-gray-900 text-sm truncate">{productName}</p>
+                        <div className="flex items-center justify-between mt-1">
+                          <span className={`text-sm font-bold ${isOutOfStock ? 'text-red-600' : 'text-orange-600'}`}>
+                            {product.quantite} en stock
+                          </span>
+                          {isOutOfStock && (
+                            <span className="bg-red-100 text-red-600 text-xs font-bold px-2 py-0.5 rounded">
+                              Rupture
+                            </span>
+                          )}
+                        </div>
                       </div>
                     );
                   })
