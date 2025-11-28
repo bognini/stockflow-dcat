@@ -139,6 +139,8 @@ export async function POST(req: Request) {
         data: {
           quantite: newQuantite,
           serialNumbers: updatedSerialNumbers,
+          // Auto-unpublish from storefront when stock reaches 0
+          ...(newQuantite === 0 && { isPublished: false }),
         },
       });
 

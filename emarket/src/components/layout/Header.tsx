@@ -4,10 +4,12 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
 import { Search, ShoppingCart, Menu, X, User } from 'lucide-react';
+import { useCart } from '@/contexts/CartContext';
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const { itemCount } = useCart();
 
   const categories = [
     { name: 'Tous les produits', href: '/produits' },
@@ -70,9 +72,11 @@ export default function Header() {
               className="relative flex items-center gap-2 text-gray-700 hover:text-primary transition-colors"
             >
               <ShoppingCart className="h-6 w-6" />
-              <span className="absolute -top-2 -right-2 bg-primary text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                0
-              </span>
+              {itemCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-primary text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {itemCount > 99 ? '99+' : itemCount}
+                </span>
+              )}
             </Link>
 
             {/* Mobile menu button */}

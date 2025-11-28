@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import prisma from '@/lib/prisma';
 import { formatPrice, calculateDiscount } from '@/lib/types';
 import ProductGallery from '@/components/ProductGallery';
+import AddToCartButton from '@/components/AddToCartButton';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 
@@ -130,12 +131,18 @@ export default async function ProductPage({ params }: { params: Params }) {
 
           {/* CTA buttons */}
           <div className="flex flex-col sm:flex-row gap-4 mb-8">
-            <button
+            <AddToCartButton
+              product={{
+                id: product.id,
+                name: productName,
+                price: originalPrice ?? 0,
+                promoPrice: hasPromo ? product.promoPrice : null,
+                imageUrl: product.images[0] ? `/api/images/${product.images[0].id}` : null,
+                maxQuantity: product.quantite,
+              }}
               disabled={product.quantite <= 0}
               className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
-            >
-              Ajouter au panier
-            </button>
+            />
             <a
               href={`https://wa.me/225XXXXXXXXXX?text=Bonjour, je suis intéressé par ${productName}`}
               target="_blank"
