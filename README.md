@@ -154,6 +154,79 @@ For a Synology NAS target:
    ```
 4. Run `./scripts/backup_db.sh` once to perform the initial sync. Subsequent cron runs will automatically mirror `backups/` to the NAS.
 
+### Dual-App Deployment (Stockflow + E-Market)
+
+The project runs two Next.js apps in Docker:
+
+| Service | Container | Port | URL |
+|---------|-----------|------|-----|
+| Stockflow (back-office) | `stockflow_dcat_web` | 3000 | https://gestion.dcat.ci |
+| E-Market (storefront) | `emarket_dcat_web` | 3001 | https://emarket.dcat.ci |
+| PostgreSQL | `stockflow_dcat_db` | 5432 | internal |
+
+#### Deploy both apps
+
+```bash
+cd /var/www/stockflow
+git pull origin main
+docker compose build
+docker compose up -d
+```
+
+#### Deploy only E-Market (faster)
+
+```bash
+cd /var/www/stockflow
+git pull origin main
+docker compose build emarket
+docker compose up -d emarket
+```
+
+#### View logs
+
+```bash
+docker logs stockflow_dcat_web --tail 100   # Stockflow
+docker logs emarket_dcat_web --tail 100     # E-Market
+docker logs emarket_dcat_web -f             # Follow in real-time
+```
+
+#### Rollback procedure
+
+1. Find the previous working commit:
+   ```bash
+   git log --oneline -10
+   ```
+
+2. Reset to that commit:
+   ```bash
+   git reset --hard <commit-hash>
+   ```
+
+3. Rebuild and restart:
+   ```bash
+   docker compose build
+   docker compose up -d
+   ```
+
+4. If needed, restore database from backup:
+   ```bash
+   gzip -dc backups/stockflow_dcat_<timestamp>.sql.gz | docker exec -i stockflow_dcat_db psql -U $POSTGRES_USER -d $POSTGRES_DB
+   ```
+
+#### E-Market Admin
+
+Access the mini admin dashboard at: https://emarket.dcat.ci/admin
+
+Features:
+- Quick publish/unpublish toggles
+- Featured product toggles
+- Active promotions overview
+- Product stats (total, published, featured, promos, out of stock)
+
+#### Cache Revalidation
+
+When products are updated in Stockflow, the E-Market cache is automatically revalidated via internal API call (`http://emarket:3001/api/revalidate`).
+
 ### CI checks
 
 GitHub Actions run before each merge/push:
