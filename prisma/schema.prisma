@@ -60,10 +60,19 @@ model Produit {
   emplacement     Emplacement?     @relation(fields: [emplacementId], references: [id])
   mouvements      MouvementStock[]
   images          ProduitImage[]
+
+  // Storefront fields
+  isPublished     Boolean          @default(false)
+  isFeatured      Boolean          @default(false)
+  seoSlug         String?          @unique
+  promoPrice      Float?
+  promoStart      DateTime?
+  promoEnd        DateTime?
   
   @@index([marqueId])
   @@index([categorieId])
   @@index([modeleId])
+  @@index([isPublished])
 }
 
 model ProduitImage {

@@ -51,5 +51,24 @@ services:
     command: npx prisma migrate deploy
     restart: 'no'
 
+  emarket:
+    build:
+      context: ./emarket
+      dockerfile: Dockerfile
+      target: runner-stage
+    container_name: emarket_dcat_web
+    ports:
+      - "3001:3001"
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - NODE_ENV=production
+      - PORT=3001
+    env_file:
+      - .env
+
 volumes:
   postgres_data:
