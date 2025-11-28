@@ -77,15 +77,15 @@ export default async function Home() {
   return (
     <div>
       {/* Hero Section - Image: 1200x800px recommended */}
-      <section className="relative bg-gradient-to-r from-blue-600 to-blue-800 text-white overflow-hidden">
-        {/* Optional hero background image */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/hero-banner.jpg"
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover opacity-20 mix-blend-overlay"
-          onError={(e) => { e.currentTarget.style.display = 'none'; }}
-        />
+      <section 
+        className="relative bg-gradient-to-r from-blue-600 to-blue-800 text-white overflow-hidden"
+        style={{
+          backgroundImage: 'url(/hero-banner.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundBlendMode: 'overlay',
+        }}
+      >
         <div className="container mx-auto px-4 py-16 md:py-24 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
             <div>
@@ -104,14 +104,15 @@ export default async function Home() {
                 <ArrowRight className="h-5 w-5" />
               </Link>
             </div>
-            {/* Optional hero side image - 1200x800px */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/hero-image.png"
-              alt="DCAT E-Market"
-              className="hidden lg:block w-full max-w-lg mx-auto rounded-lg shadow-2xl"
-              onError={(e) => { e.currentTarget.style.display = 'none'; }}
-            />
+            {/* Hero side image - 1200x800px */}
+            <div className="hidden lg:block">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/hero-image.png"
+                alt="DCAT E-Market"
+                className="w-full max-w-lg mx-auto rounded-lg shadow-2xl"
+              />
+            </div>
           </div>
         </div>
       </section>
