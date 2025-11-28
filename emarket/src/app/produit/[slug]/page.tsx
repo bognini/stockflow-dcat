@@ -1,8 +1,12 @@
 import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
 import prisma from '@/lib/prisma';
 import { formatPrice, calculateDiscount } from '@/lib/types';
 import ProductGallery from '@/components/ProductGallery';
 import AddToCartButton from '@/components/AddToCartButton';
+import PromoBadge, { getPromoVariant } from '@/components/PromoBadge';
+import PromoCountdown from '@/components/PromoCountdown';
+import ProductJsonLd from '@/components/ProductJsonLd';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 
@@ -10,6 +14,8 @@ import { ChevronRight } from 'lucide-react';
 export const dynamic = 'force-dynamic';
 
 type Params = Promise<{ slug: string }>;
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://emarket.dcat.ci';
 
 async function getProduct(slug: string) {
   // Try to find by seoSlug first, then by id
@@ -53,6 +59,56 @@ async function getRelatedProducts(categorieId: string, excludeId: string) {
   return products;
 }
 
+// Generate dynamic metadata for SEO
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+  const { slug } = await params;
+  const product = await getProduct(slug);
+
+  if (!product) {
+    return {
+      title: 'Produit non trouvé - DCAT E-Market',
+    };
+  }
+
+  const productName = `${product.marque.nom} ${product.modele.nom}`;
+  const description = product.description 
+    || `Achetez ${productName} au meilleur prix sur DCAT E-Market. ${product.categorie.nom}. Livraison en Côte d'Ivoire.`;
+  const imageUrl = product.images[0] 
+    ? `${SITE_URL}/api/images/${product.images[0].id}` 
+    : `${SITE_URL}/og-default.png`;
+  const productUrl = `${SITE_URL}/produit/${product.seoSlug || product.id}`;
+
+  return {
+    title: `${productName} - DCAT E-Market`,
+    description,
+    openGraph: {
+      title: productName,
+      description,
+      url: productUrl,
+      siteName: 'DCAT E-Market',
+      images: [
+        {
+          url: imageUrl,
+          width: 800,
+          height: 600,
+          alt: productName,
+        },
+      ],
+      locale: 'fr_CI',
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: productName,
+      description,
+      images: [imageUrl],
+    },
+    alternates: {
+      canonical: productUrl,
+    },
+  };
+}
+
 export default async function ProductPage({ params }: { params: Params }) {
   const { slug } = await params;
   const product = await getProduct(slug);
@@ -63,15 +119,50 @@ export default async function ProductPage({ params }: { params: Params }) {
 
   const relatedProducts = await getRelatedProducts(product.categorieId, product.id);
 
-  const hasPromo = product.promoPrice !== null && product.promoPrice < (product.prixVente ?? 0);
+  // Check if promo is currently active (respecting date range)
+  const now = new Date();
+  const promoStartValid = !product.promoStart || new Date(product.promoStart) <= now;
+  const promoEndValid = !product.promoEnd || new Date(product.promoEnd) >= now;
+  const hasPromo = product.promoPrice !== null && 
+                   product.promoPrice < (product.prixVente ?? 0) &&
+                   promoStartValid && promoEndValid;
+  
   const displayPrice = hasPromo ? product.promoPrice! : product.prixVente;
   const originalPrice = product.prixVente;
   const discount = hasPromo && originalPrice ? calculateDiscount(originalPrice, product.promoPrice!) : 0;
+  const promoVariant = getPromoVariant(discount);
   const productName = `${product.marque.nom} ${product.modele.nom}`;
+  
+  // Check if promo has end date for countdown
+  const hasPromoEnd = hasPromo && product.promoEnd;
+
+  // Image URL for JSON-LD
+  const imageUrl = product.images[0] 
+    ? `${SITE_URL}/api/images/${product.images[0].id}` 
+    : null;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Breadcrumbs */}
+    <>
+      {/* JSON-LD structured data for SEO */}
+      <ProductJsonLd
+        product={{
+          name: productName,
+          description: product.description,
+          price: originalPrice ?? 0,
+          promoPrice: hasPromo ? product.promoPrice : null,
+          currency: 'XOF',
+          availability: product.quantite > 0 ? 'InStock' : 'OutOfStock',
+          imageUrl,
+          url: `${SITE_URL}/produit/${product.seoSlug || product.id}`,
+          brand: product.marque.nom,
+          category: product.categorie.nom,
+          sku: product.id,
+          promoEndDate: product.promoEnd?.toISOString() ?? null,
+        }}
+      />
+
+      <div className="container mx-auto px-4 py-8">
+        {/* Breadcrumbs */}
       <nav className="flex items-center gap-2 text-sm text-gray-500 mb-6">
         <Link href="/" className="hover:text-gray-700">Accueil</Link>
         <ChevronRight className="h-4 w-4" />
@@ -96,16 +187,26 @@ export default async function ProductPage({ params }: { params: Params }) {
           {/* Price */}
           <div className="mb-6">
             {hasPromo ? (
-              <div className="flex items-center gap-3">
-                <span className="text-3xl font-bold text-red-600">
-                  {formatPrice(displayPrice!)}
-                </span>
-                <span className="text-xl text-gray-400 line-through">
-                  {formatPrice(originalPrice!)}
-                </span>
-                <span className="bg-red-100 text-red-600 text-sm font-semibold px-2 py-1 rounded">
-                  -{discount}%
-                </span>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="text-3xl font-bold text-red-600">
+                    {formatPrice(displayPrice!)}
+                  </span>
+                  <span className="text-xl text-gray-400 line-through">
+                    {formatPrice(originalPrice!)}
+                  </span>
+                  <PromoBadge discount={discount} variant={promoVariant} size="lg" />
+                </div>
+                <p className="text-sm text-green-600 font-medium">
+                  Vous économisez {formatPrice(originalPrice! - displayPrice!)}
+                </p>
+                {/* Countdown timer for limited promos */}
+                {hasPromoEnd && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                    <p className="text-sm text-red-700 font-medium mb-2">⏰ Offre limitée !</p>
+                    <PromoCountdown endDate={new Date(product.promoEnd!)} />
+                  </div>
+                )}
               </div>
             ) : (
               <span className="text-3xl font-bold text-gray-900">
@@ -240,6 +341,7 @@ export default async function ProductPage({ params }: { params: Params }) {
           </div>
         </section>
       )}
-    </div>
+      </div>
+    </>
   );
 }

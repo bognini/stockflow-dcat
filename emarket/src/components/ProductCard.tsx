@@ -1,15 +1,39 @@
 import Link from 'next/link';
 import { ProductWithRelations, formatPrice, calculateDiscount } from '@/lib/types';
+import PromoBadge, { getPromoVariant } from './PromoBadge';
+import PromoCountdown from './PromoCountdown';
 
 type ProductCardProps = {
   product: ProductWithRelations;
 };
 
+// Check if promo is currently active
+function isPromoActive(product: ProductWithRelations): boolean {
+  if (product.promoPrice === null || product.promoPrice >= (product.prixVente ?? 0)) {
+    return false;
+  }
+  
+  const now = new Date();
+  
+  // Check start date
+  if (product.promoStart && new Date(product.promoStart) > now) {
+    return false;
+  }
+  
+  // Check end date
+  if (product.promoEnd && new Date(product.promoEnd) < now) {
+    return false;
+  }
+  
+  return true;
+}
+
 export default function ProductCard({ product }: ProductCardProps) {
-  const hasPromo = product.promoPrice !== null && product.promoPrice < (product.prixVente ?? 0);
+  const hasPromo = isPromoActive(product);
   const displayPrice = hasPromo ? product.promoPrice! : product.prixVente;
   const originalPrice = product.prixVente;
   const discount = hasPromo && originalPrice ? calculateDiscount(originalPrice, product.promoPrice!) : 0;
+  const promoVariant = getPromoVariant(discount);
 
   // Get first image or placeholder
   const imageUrl = product.images[0]
@@ -18,6 +42,9 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   const productName = `${product.marque.nom} ${product.modele.nom}`;
   const slug = product.seoSlug || product.id;
+
+  // Check if promo has end date for countdown
+  const hasPromoEnd = hasPromo && product.promoEnd;
 
   return (
     <Link
@@ -35,8 +62,15 @@ export default function ProductCard({ product }: ProductCardProps) {
         
         {/* Promo badge */}
         {hasPromo && (
-          <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
-            -{discount}%
+          <div className="absolute top-2 left-2">
+            <PromoBadge discount={discount} variant={promoVariant} />
+          </div>
+        )}
+
+        {/* Countdown timer for limited promos */}
+        {hasPromoEnd && (
+          <div className="absolute bottom-2 left-2 bg-black/70 text-white rounded px-2 py-1">
+            <PromoCountdown endDate={new Date(product.promoEnd!)} compact />
           </div>
         )}
 
