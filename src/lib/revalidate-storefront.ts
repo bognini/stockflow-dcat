@@ -3,8 +3,8 @@
  * Called when products are created, updated, or deleted in Stockflow
  */
 
-const EMARKET_URL = process.env.EMARKET_URL || 'http://localhost:3001';
-const REVALIDATION_SECRET = process.env.REVALIDATION_SECRET;
+const EMARKET_URL = process.env.EMARKET_URL || 'http://emarket:3001';
+const REVALIDATION_SECRET = process.env.REVALIDATION_SECRET || 'sync2store@APP';
 
 type RevalidationType = 'product' | 'category' | 'all';
 
@@ -15,11 +15,6 @@ interface RevalidateOptions {
 }
 
 export async function revalidateStorefront(options: RevalidateOptions): Promise<boolean> {
-  if (!REVALIDATION_SECRET) {
-    console.warn('[REVALIDATE] No REVALIDATION_SECRET configured, skipping storefront revalidation');
-    return false;
-  }
-
   try {
     const response = await fetch(`${EMARKET_URL}/api/revalidate`, {
       method: 'POST',

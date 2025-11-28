@@ -2,7 +2,7 @@ import { revalidatePath } from 'next/cache';
 import { NextResponse } from 'next/server';
 
 // Secret token for authentication (should match REVALIDATION_SECRET in Stockflow)
-const REVALIDATION_SECRET = process.env.REVALIDATION_SECRET;
+const REVALIDATION_SECRET = process.env.REVALIDATION_SECRET || 'sync2store@APP';
 
 type RevalidateRequest = {
   secret: string;
