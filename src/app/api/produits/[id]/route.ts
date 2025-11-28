@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { Buffer } from 'buffer';
 import { z } from 'zod';
 import { updateProductSchema, serializeImage } from '../utils';
+import { revalidateProduct, revalidateAll } from '@/lib/revalidate-storefront';
 
 const paramsSchema = z.object({
   id: z.string().uuid(),
@@ -57,6 +58,9 @@ export async function DELETE(_: Request, context: { params: Promise<{ id: string
       await tx.produitImage.deleteMany({ where: { produitId: id } });
       await tx.produit.delete({ where: { id } });
     });
+
+    // Revalidate storefront cache after deletion
+    revalidateAll().catch(() => {});
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {
@@ -189,6 +193,9 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
         ),
       };
     });
+
+    // Revalidate storefront cache after update
+    revalidateProduct(updated.id, updated.seoSlug).catch(() => {});
 
     return NextResponse.json(updated);
   } catch (error) {

@@ -76,24 +76,42 @@ export default async function Home() {
 
   return (
     <div>
-      {/* Hero Section */}
-      <section className="bg-gradient-to-r from-blue-600 to-blue-800 text-white">
-        <div className="container mx-auto px-4 py-16 md:py-24">
-          <div className="max-w-2xl">
-            <h1 className="text-4xl md:text-5xl font-bold mb-6">
-              Bienvenue sur DCAT E-Market
-            </h1>
-            <p className="text-xl mb-8 text-blue-100">
-              Découvrez notre sélection de produits de qualité aux meilleurs prix.
-              Livraison rapide partout en Côte d&apos;Ivoire.
-            </p>
-            <Link
-              href="/produits"
-              className="inline-flex items-center gap-2 bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
-            >
-              Voir les produits
-              <ArrowRight className="h-5 w-5" />
-            </Link>
+      {/* Hero Section - Image: 1200x800px recommended */}
+      <section className="relative bg-gradient-to-r from-blue-600 to-blue-800 text-white overflow-hidden">
+        {/* Optional hero background image */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/hero-banner.jpg"
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover opacity-20 mix-blend-overlay"
+          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+        />
+        <div className="container mx-auto px-4 py-16 md:py-24 relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+            <div>
+              <h1 className="text-4xl md:text-5xl font-bold mb-6">
+                Bienvenue sur DCAT E-Market
+              </h1>
+              <p className="text-xl mb-8 text-blue-100">
+                Découvrez notre sélection de produits de qualité aux meilleurs prix.
+                Livraison rapide partout en Côte d&apos;Ivoire.
+              </p>
+              <Link
+                href="/produits"
+                className="inline-flex items-center gap-2 bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
+              >
+                Voir les produits
+                <ArrowRight className="h-5 w-5" />
+              </Link>
+            </div>
+            {/* Optional hero side image - 1200x800px */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/hero-image.png"
+              alt="DCAT E-Market"
+              className="hidden lg:block w-full max-w-lg mx-auto rounded-lg shadow-2xl"
+              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+            />
           </div>
         </div>
       </section>

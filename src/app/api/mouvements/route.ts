@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { Buffer } from 'buffer';
 import { z } from 'zod';
 import { sendNotificationEmail } from '@/lib/mail';
+import { revalidateProduct } from '@/lib/revalidate-storefront';
 
 const toOptionalNumber = (value: unknown) => {
   if (value === null || value === undefined || value === '') {
@@ -198,6 +199,9 @@ export async function POST(req: Request) {
         );
       }
     }
+
+    // Revalidate storefront cache after stock change
+    revalidateProduct(data.produitId).catch(() => {});
 
     return NextResponse.json(result, { status: 201 });
   } catch (error) {
