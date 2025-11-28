@@ -1,7 +1,12 @@
 import Link from 'next/link';
 import prisma from '@/lib/prisma';
+
 import ProductCard from '@/components/ProductCard';
+
 import { ArrowRight, Truck, Shield, Headphones } from 'lucide-react';
+
+// Force dynamic rendering - don't pre-render at build time
+export const dynamic = 'force-dynamic';
 
 async function getFeaturedProducts() {
   const products = await prisma.produit.findMany({

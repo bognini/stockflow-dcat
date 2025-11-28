@@ -5,6 +5,9 @@ import ProductGallery from '@/components/ProductGallery';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 
+// Force dynamic rendering - don't pre-render at build time
+export const dynamic = 'force-dynamic';
+
 type Params = Promise<{ slug: string }>;
 
 async function getProduct(slug: string) {

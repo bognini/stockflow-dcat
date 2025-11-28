@@ -2,6 +2,9 @@ import prisma from '@/lib/prisma';
 import ProductCard from '@/components/ProductCard';
 import { ProductWithRelations, CategoryWithCount } from '@/lib/types';
 
+// Force dynamic rendering - don't pre-render at build time
+export const dynamic = 'force-dynamic';
+
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 async function getProducts(categorieId?: string, marqueId?: string, search?: string) {
