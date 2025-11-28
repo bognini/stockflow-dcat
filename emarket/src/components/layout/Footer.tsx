@@ -8,7 +8,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* About */}
           <div>
-            <h3 className="text-white text-lg font-bold mb-4">eMarket DCAT</h3>
+            <h3 className="text-white text-lg font-bold mb-4">DCAT E-Market</h3>
             <p className="text-sm leading-relaxed">
               Votre boutique en ligne de confiance en Côte d&apos;Ivoire. 
               Produits de qualité, prix compétitifs et livraison rapide.
@@ -91,7 +91,7 @@ export default function Footer() {
 
         {/* Bottom bar */}
         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm">
-          <p>&copy; {new Date().getFullYear()} eMarket DCAT. Tous droits réservés.</p>
+          <p>&copy; {new Date().getFullYear()} DCAT E-Market. Tous droits réservés.</p>
         </div>
       </div>
     </footer>

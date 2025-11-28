@@ -10,7 +10,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "eMarket DCAT - Boutique en ligne",
+  title: "DCAT E-Market - Boutique en ligne",
   description: "Découvrez notre sélection de produits de qualité. Livraison rapide en Côte d'Ivoire.",
 };
 

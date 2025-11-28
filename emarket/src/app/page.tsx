@@ -81,7 +81,7 @@ export default async function Home() {
         <div className="container mx-auto px-4 py-16 md:py-24">
           <div className="max-w-2xl">
             <h1 className="text-4xl md:text-5xl font-bold mb-6">
-              Bienvenue sur eMarket DCAT
+              Bienvenue sur DCAT E-Market
             </h1>
             <p className="text-xl mb-8 text-blue-100">
               Découvrez notre sélection de produits de qualité aux meilleurs prix.

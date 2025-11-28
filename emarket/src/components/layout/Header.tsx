@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState } from 'react';
 import { Search, ShoppingCart, Menu, X, User } from 'lucide-react';
 
@@ -27,9 +28,17 @@ export default function Header() {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between gap-4">
           {/* Logo */}
-          <Link href="/" className="flex-shrink-0">
-            <span className="text-2xl font-bold text-primary">eMarket</span>
-            <span className="text-sm text-gray-500 ml-1">DCAT</span>
+          <Link href="/" className="flex-shrink-0 flex items-center gap-2">
+            <Image
+              src="/dcat-logo.png"
+              alt="DCAT E-Market"
+              width={40}
+              height={40}
+              className="h-10 w-auto"
+            />
+            <span className="text-xl font-bold text-gray-900">
+              DCAT <span className="text-primary">E-Market</span>
+            </span>
           </Link>
 
           {/* Search bar - hidden on mobile */}
