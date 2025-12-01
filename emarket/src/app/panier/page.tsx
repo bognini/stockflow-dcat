@@ -3,10 +3,11 @@
 import Link from 'next/link';
 import { useCart } from '@/contexts/CartContext';
 import { formatPrice } from '@/lib/types';
-import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, Smartphone, CreditCard, Building2 } from 'lucide-react';
+import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, Smartphone, CreditCard, Building2, Truck } from 'lucide-react';
 import { useState } from 'react';
 
 const paymentMethods = [
+  { id: 'cod', name: 'Paiement à la livraison', icon: Truck, color: 'text-emerald-600' },
   { id: 'orange', name: 'Orange Money', icon: Smartphone, color: 'text-orange-500' },
   { id: 'mtn', name: 'MTN MoMo', icon: Smartphone, color: 'text-yellow-500' },
   { id: 'wave', name: 'Wave', icon: Smartphone, color: 'text-blue-400' },

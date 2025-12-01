@@ -84,6 +84,7 @@ type FormValues = {
   prixVente: string;
   seuilAlerte: string;
   emplacementId: string;
+  quantite: string;
   // Storefront fields
   isPublished: boolean;
   isFeatured: boolean;
@@ -105,6 +106,7 @@ const emptyFormValues: FormValues = {
   prixVente: '',
   seuilAlerte: '',
   emplacementId: '',
+  quantite: '',
   // Storefront fields
   isPublished: false,
   isFeatured: false,
@@ -151,6 +153,7 @@ function buildFormValues(product?: Produit | null): FormValues {
     prixVente: product.prixVente ? String(product.prixVente) : '',
     seuilAlerte: product.seuilAlerte ? String(product.seuilAlerte) : '',
     emplacementId: product.emplacementId ?? '',
+    quantite: String(product.quantite ?? 0),
     // Storefront fields
     isPublished: product.isPublished ?? false,
     isFeatured: product.isFeatured ?? false,
@@ -441,7 +444,7 @@ export function ProductForm({ mode, initialProduct, onSuccess, onCancel, title, 
         coutLogistique: parseNumber(formValues.coutLogistique),
         prixVente: parseNumber(formValues.prixVente),
         seuilAlerte: parseInteger(formValues.seuilAlerte),
-        quantite: mode === 'edit' ? initialProduct?.quantite ?? 0 : 0,
+        quantite: mode === 'edit' ? parseInteger(formValues.quantite) ?? initialProduct?.quantite ?? 0 : 0,
         modeleId: selectedModeleId,
         marqueId: modele.marqueId,
         categorieId: modele.categorieId,
@@ -668,7 +671,7 @@ export function ProductForm({ mode, initialProduct, onSuccess, onCancel, title, 
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="seuilAlerte">Seuil d'alerte (quantité)</Label>
+          <Label htmlFor="seuilAlerte">Seuil d&apos;alerte (quantité)</Label>
           <Input
             id="seuilAlerte"
             type="number"
@@ -678,6 +681,22 @@ export function ProductForm({ mode, initialProduct, onSuccess, onCancel, title, 
             placeholder="ex: 5"
           />
         </div>
+        {mode === 'edit' && (
+          <div className="space-y-2">
+            <Label htmlFor="quantite">Quantité en stock (admin)</Label>
+            <Input
+              id="quantite"
+              type="number"
+              min="0"
+              value={formValues.quantite}
+              onChange={(event) => handleFieldChange('quantite', event.target.value)}
+              placeholder="ex: 10"
+            />
+            <p className="text-xs text-muted-foreground">
+              Modifier directement la quantité sans créer de mouvement
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="space-y-2">

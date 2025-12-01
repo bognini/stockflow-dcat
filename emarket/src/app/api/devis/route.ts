@@ -20,6 +20,7 @@ type QuoteRequest = {
 };
 
 const paymentMethodLabels: Record<string, string> = {
+  cod: 'Paiement à la livraison',
   orange: 'Orange Money',
   mtn: 'MTN MoMo',
   wave: 'Wave',

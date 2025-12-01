@@ -295,14 +295,14 @@ function HistoriqueTab({ mouvements, utilisateurs, isLoading }: HistoriqueTabPro
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Nom du produit</TableHead>
-                  <TableHead>Modèle</TableHead>
-                  <TableHead className="text-center">Type</TableHead>
-                  <TableHead className="text-center">Quantité</TableHead>
-                  <TableHead>Utilisateur</TableHead>
-                  <TableHead>Détails</TableHead>
-                  <TableHead>Justificatif</TableHead>
+                  <TableHead className="w-[90px]">Date</TableHead>
+                  <TableHead className="w-[120px]">Produit</TableHead>
+                  <TableHead className="w-[100px]">Modèle</TableHead>
+                  <TableHead className="w-[80px] text-center">Type</TableHead>
+                  <TableHead className="w-[60px] text-center">Qté</TableHead>
+                  <TableHead className="w-[100px]">Opérateur</TableHead>
+                  <TableHead className="w-[180px]">Détails</TableHead>
+                  <TableHead className="w-[100px]">Justif.</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -319,10 +319,10 @@ function HistoriqueTab({ mouvements, utilisateurs, isLoading }: HistoriqueTabPro
                         <TableCell>
                           {format(parseISO(mouvement.date as unknown as string), 'dd/MM/yyyy')}
                         </TableCell>
-                        <TableCell className="font-semibold">
+                        <TableCell className="font-semibold max-w-[120px] truncate" title={mouvement.produit.nom}>
                           {mouvement.produit.nom}
                         </TableCell>
-                        <TableCell className="font-medium">
+                        <TableCell className="font-medium max-w-[100px] truncate" title={mouvement.produit.modele.nom}>
                           {mouvement.produit.modele.nom}
                         </TableCell>
                         <TableCell className="text-center">
@@ -352,7 +352,7 @@ function HistoriqueTab({ mouvements, utilisateurs, isLoading }: HistoriqueTabPro
                           {mouvement.type === 'ENTREE' ? '+' : '-'}
                           {mouvement.quantite}
                         </TableCell>
-                        <TableCell>{mouvement.utilisateur.nom}</TableCell>
+                        <TableCell className="max-w-[100px] truncate" title={mouvement.utilisateur.nom}>{mouvement.utilisateur.nom}</TableCell>
                         <TableCell>
                           <div className="space-y-1 text-sm text-muted-foreground">
                             {mouvement.type === 'ENTREE' && mouvement.fournisseur && (

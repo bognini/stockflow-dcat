@@ -1,5 +1,6 @@
 import prisma from '@/lib/prisma';
 import ProductCard from '@/components/ProductCard';
+import ProductFilters from '@/components/ProductFilters';
 import { ProductWithRelations, CategoryWithCount } from '@/lib/types';
 
 // Force dynamic rendering - don't pre-render at build time
@@ -77,54 +78,13 @@ export default async function ProduitsPage({ searchParams }: { searchParams: Sea
       </h1>
 
       <div className="flex flex-col lg:flex-row gap-8">
-        {/* Filters sidebar */}
-        <aside className="lg:w-64 flex-shrink-0">
-          <div className="bg-white rounded-lg shadow-sm p-4 sticky top-24">
-            <h2 className="font-semibold mb-4">Filtres</h2>
-
-            {/* Categories */}
-            <div className="mb-6">
-              <h3 className="text-sm font-medium text-gray-700 mb-2">Catégories</h3>
-              <ul className="space-y-1">
-                <li>
-                  <a
-                    href="/produits"
-                    className={`block py-1 text-sm ${!categorieId ? 'text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-900'}`}
-                  >
-                    Toutes les catégories
-                  </a>
-                </li>
-                {filters.categories.map((cat) => (
-                  <li key={cat.id}>
-                    <a
-                      href={`/produits?categorie=${cat.id}`}
-                      className={`block py-1 text-sm ${categorieId === cat.id ? 'text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-900'}`}
-                    >
-                      {cat.nom} ({cat._count.produits})
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Marques */}
-            <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-2">Marques</h3>
-              <ul className="space-y-1">
-                {filters.marques.map((marque) => (
-                  <li key={marque.id}>
-                    <a
-                      href={`/produits?marque=${marque.id}${categorieId ? `&categorie=${categorieId}` : ''}`}
-                      className={`block py-1 text-sm ${marqueId === marque.id ? 'text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-900'}`}
-                    >
-                      {marque.nom} ({marque._count.produits})
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </aside>
+        {/* Filters sidebar - collapsible on mobile */}
+        <ProductFilters
+          categories={filters.categories}
+          marques={filters.marques}
+          selectedCategorieId={categorieId}
+          selectedMarqueId={marqueId}
+        />
 
         {/* Products grid */}
         <div className="flex-1">

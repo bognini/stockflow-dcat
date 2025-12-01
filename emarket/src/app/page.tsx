@@ -76,23 +76,30 @@ export default async function Home() {
 
   return (
     <div>
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-r from-blue-600 to-blue-800 text-white">
-        <div className="container mx-auto px-4 py-16 md:py-24">
-          <div className="max-w-2xl">
-            <h1 className="text-4xl md:text-5xl font-bold mb-6">
+      {/* Hero Banner - Recommended: 1920x600px for desktop, 768x400px for mobile */}
+      <section className="relative h-[300px] md:h-[400px] lg:h-[500px] overflow-hidden">
+        {/* Banner image - place images in /public/banners/ folder */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: 'url(/banners/banner-1.jpg)' }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-900/80 to-blue-600/60" />
+        </div>
+        <div className="relative container mx-auto px-4 h-full flex items-center">
+          <div className="max-w-xl text-white">
+            <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-4 whitespace-nowrap">
               Bienvenue sur DCAT E-Market
             </h1>
-            <p className="text-xl mb-8 text-blue-100">
+            <p className="text-sm md:text-lg mb-6 text-blue-100">
               Découvrez notre sélection de produits de qualité aux meilleurs prix.
               Livraison rapide partout en Côte d&apos;Ivoire.
             </p>
             <Link
               href="/produits"
-              className="inline-flex items-center gap-2 bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
+              className="inline-flex items-center gap-2 bg-white text-blue-600 px-6 py-2.5 rounded-lg font-semibold hover:bg-blue-50 transition-colors text-sm md:text-base"
             >
               Voir les produits
-              <ArrowRight className="h-5 w-5" />
+              <ArrowRight className="h-4 w-4 md:h-5 md:w-5" />
             </Link>
           </div>
         </div>

@@ -5,9 +5,10 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useCart } from '@/contexts/CartContext';
 import { formatPrice } from '@/lib/types';
-import { ArrowLeft, Send, CheckCircle, ShoppingBag, Smartphone, CreditCard, Building2 } from 'lucide-react';
+import { ArrowLeft, Send, CheckCircle, ShoppingBag, Smartphone, CreditCard, Building2, Truck } from 'lucide-react';
 
 const paymentLabels: Record<string, { name: string; icon: typeof Smartphone; color: string }> = {
+  cod: { name: 'Paiement à la livraison', icon: Truck, color: 'text-emerald-600' },
   orange: { name: 'Orange Money', icon: Smartphone, color: 'text-orange-500' },
   mtn: { name: 'MTN MoMo', icon: Smartphone, color: 'text-yellow-500' },
   wave: { name: 'Wave', icon: Smartphone, color: 'text-blue-400' },
